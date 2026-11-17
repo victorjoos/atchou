@@ -4,15 +4,15 @@ Order: MVP server + app first (no auth, no frame), then scheduling, auth,
 deployment, firmware.
 
 ## Phase 1 – MVP (no auth, no frame)
-1. **Server scaffold**: FastAPI, SQLite, config file, data dir, Dockerfile-ready layout.
-2. **Image pipeline v0**: resize/crop to 800×480, Floyd–Steinberg dither to the
+1. ✅ **Server scaffold**: FastAPI, SQLite, config file, data dir, Dockerfile-ready layout.
+2. ✅ **Image pipeline v0**: resize/crop to 800×480, Floyd–Steinberg dither to the
    6-color palette, PNG preview. CLI tool for experimenting. (Palette tuned
    against the real panel later.)
-3. **Post API v0**: upload (image + author + options), list, get thumbnail/preview,
+3. ✅ **Post API v0**: upload (image + author + options), list, get thumbnail/preview,
    delete, author suggestions. Open endpoints (no auth yet).
-4. **Android: project + upload flow**: pick/capture photo, author field with
+4. ✅ **Android: project + upload flow**: pick/capture photo, author field with
    suggestions, send, show server preview.
-5. **Android: history**: gallery of all posts, delete.
+5. ✅ **Android: history** (basic grid + delete done; reschedule/pin pending editor): gallery of all posts, delete.
 6. **Android: editor**: crop (5:3), rotate, brightness/contrast, author-overlay
    toggle (overlay rendered by server), "show on date", pin, exclude.
 7. **Android: paint/text canvas**: 6-color palette, brush, eraser, text; uploads
