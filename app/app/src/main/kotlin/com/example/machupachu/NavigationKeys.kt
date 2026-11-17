@@ -1,0 +1,8 @@
+package com.example.machupachu
+
+import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
+
+@Serializable data object History : NavKey
+
+@Serializable data object Send : NavKey
