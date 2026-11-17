@@ -1,0 +1,39 @@
+# Machu Pachu – Tasks
+
+Order: MVP server + app first (no auth, no frame), then scheduling, auth,
+deployment, firmware.
+
+## Phase 1 – MVP (no auth, no frame)
+1. **Server scaffold**: FastAPI, SQLite, config file, data dir, Dockerfile-ready layout.
+2. **Image pipeline v0**: resize/crop to 800×480, Floyd–Steinberg dither to the
+   6-color palette, PNG preview. CLI tool for experimenting. (Palette tuned
+   against the real panel later.)
+3. **Post API v0**: upload (image + author + options), list, get thumbnail/preview,
+   delete, author suggestions. Open endpoints (no auth yet).
+4. **Android: project + upload flow**: pick/capture photo, author field with
+   suggestions, send, show server preview.
+5. **Android: history**: gallery of all posts, delete.
+6. **Android: editor**: crop (5:3), rotate, brightness/contrast, author-overlay
+   toggle (overlay rendered by server), "show on date", pin, exclude.
+7. **Android: paint/text canvas**: 6-color palette, brush, eraser, text; uploads
+   as a post (exact palette, no dithering).
+
+## Phase 2 – Frame-facing server logic
+8. **Scheduler**: day queue (newest first, overflow to next days), decay-weighted
+   rotation pool, pin/exclude; unit tests.
+9. **Frame API**: device token, current image + ETag, native packed buffer,
+   battery report, `next_wake_at` logic (quiet/busy/scheduled, clamps); unit tests.
+10. **Frame simulator script** that polls like the firmware would.
+
+## Phase 3 – Hardening and deployment
+11. **Auth**: Google ID-token verification, email allowlist in config,
+    Google Sign-In in the app.
+12. **Deployment**: Docker, Caddy config, backups, HTTPS.
+13. **Palette tuning** against the physical panel; optional dithering for drawings.
+
+## Phase 4 – Firmware
+14. ESP32-S3 firmware: Wi-Fi, poll, download, display, battery, deep sleep.
+
+## Open decisions
+- Final rotation decay formula and default slot times.
+- Android min SDK and image upload size limit.

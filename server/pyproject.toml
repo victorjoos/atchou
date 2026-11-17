@@ -1,0 +1,26 @@
+[project]
+name = "machu-pachu-server"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Victor Joos", email = "victorjoosdtb@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.163.2",
+    "numpy>=2.5.5",
+    "pillow>=13.0.0",
+    "python-multipart>=0.0.34",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.9,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.2.0",
+]
