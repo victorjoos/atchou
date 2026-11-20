@@ -26,10 +26,11 @@ deployment, firmware.
     drawings auto-detect the sheet's corners and perspective-correct it to a flat
     5:3 image (on-device, e.g. OpenCV or ML Kit Document Scanner), with manual
     corner adjustment as fallback; boost contrast/white balance for paper.
-7b. **French everywhere**: all user-facing text in French (app UI strings moved to
+7b. ✅ (existing screens) **French everywhere**: all user-facing text in French (app UI strings moved to
     `strings.xml` with a French default, server error messages, any text rendered
     on the image such as paint-canvas/text tool labels, Google sign-in prompts).
-    Do this before adding many more screens so new strings start in French.
+    Existing app screens and server messages are translated; new strings must go in
+    `strings.xml` in French (Google sign-in and canvas tool labels still to do).
 
 ## Phase 2 – Frame-facing server logic
 8. **Scheduler**: day queue (newest first, overflow to next days), decay-weighted

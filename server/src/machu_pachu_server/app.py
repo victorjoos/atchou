@@ -27,17 +27,17 @@ def _parse_crop(crop: str | None):
     try:
         x, y, w, h = (float(v) for v in crop.split(","))
     except ValueError:
-        raise HTTPException(422, "crop must be 'x,y,w,h' (normalized 0..1)")
+        raise HTTPException(422, "le recadrage doit être « x,y,l,h » (valeurs normalisées 0..1)")
     if not (0 <= x < 1 and 0 <= y < 1 and 0 < w <= 1 and 0 < h <= 1 and x + w <= 1.0001 and y + h <= 1.0001):
-        raise HTTPException(422, "crop out of range")
+        raise HTTPException(422, "recadrage hors limites")
     return (x, y, w, h)
 
 
 def _build_params(crop, rotate, brightness, contrast, author, show_author, mode) -> imaging.EditParams:
     if rotate % 90:
-        raise HTTPException(422, "rotate must be a multiple of 90")
+        raise HTTPException(422, "la rotation doit être un multiple de 90")
     if mode not in ("dither", "exact"):
-        raise HTTPException(422, "mode must be 'dither' or 'exact'")
+        raise HTTPException(422, "le mode doit être « dither » ou « exact »")
     return imaging.EditParams(
         crop=_parse_crop(crop), rotate=rotate, brightness=brightness, contrast=contrast,
         author=author, show_author=show_author, mode=mode,
@@ -48,7 +48,7 @@ def _load(upload_bytes: bytes):
     try:
         return imaging.load_image(upload_bytes)
     except (UnidentifiedImageError, OSError):
-        raise HTTPException(400, "not a valid image")
+        raise HTTPException(400, "image invalide")
 
 
 def create_app(data_dir: Path | None = None) -> FastAPI:
@@ -72,7 +72,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     def get_row(post_id: int):
         row = conn.execute("SELECT * FROM posts WHERE id = ?", (post_id,)).fetchone()
         if row is None:
-            raise HTTPException(404, "post not found")
+            raise HTTPException(404, "publication introuvable")
         return row
 
     @app.post("/preview")
@@ -109,7 +109,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             try:
                 date.fromisoformat(show_on)
             except ValueError:
-                raise HTTPException(422, "show_on must be YYYY-MM-DD")
+                raise HTTPException(422, "show_on doit être au format AAAA-MM-JJ")
         params = _build_params(crop, rotate, brightness, contrast, author, show_author, mode)
         original = await image.read()
         rendered = imaging.render(_load(original), params)
@@ -157,7 +157,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             try:
                 date.fromisoformat(fields["show_on"])
             except ValueError:
-                raise HTTPException(422, "show_on must be YYYY-MM-DD")
+                raise HTTPException(422, "show_on doit être au format AAAA-MM-JJ")
         if fields:
             sets = ", ".join(f"{k} = ?" for k in fields)
             conn.execute(f"UPDATE posts SET {sets} WHERE id = ?", (*fields.values(), post_id))

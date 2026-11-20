@@ -1,5 +1,7 @@
 package com.example.machupachu.ui.send
 
+import com.example.machupachu.R
+import androidx.compose.ui.res.stringResource
 import android.graphics.BitmapFactory
 import androidx.core.net.toUri
 import androidx.compose.foundation.Image
@@ -44,7 +46,7 @@ fun SendScreen(uri: String, onBack: () -> Unit, onDone: () -> Unit, viewModel: S
   LaunchedEffect(uri) { viewModel.onPicked(uri.toUri()) }
   LaunchedEffect(state.done) { if (state.done) onDone() }
 
-  Scaffold(topBar = { TopAppBar(title = { Text("New post") }) }) { padding ->
+  Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.send_title)) }) }) { padding ->
     Column(
       modifier = Modifier.padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
       verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -57,16 +59,16 @@ fun SendScreen(uri: String, onBack: () -> Unit, onDone: () -> Unit, viewModel: S
           state.preview?.let { BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap() }
         }
         if (bitmap != null) {
-          Image(bitmap, contentDescription = "Preview", contentScale = ContentScale.Fit, modifier = Modifier.fillMaxWidth())
+          Image(bitmap, contentDescription = stringResource(R.string.send_preview), contentScale = ContentScale.Fit, modifier = Modifier.fillMaxWidth())
         }
         if (state.previewLoading || (!state.hasImage && state.error == null)) CircularProgressIndicator()
       }
-      OutlinedButton(onClick = onBack) { Text("Retake") }
+      OutlinedButton(onClick = onBack) { Text(stringResource(R.string.send_retake)) }
 
       OutlinedTextField(
         value = state.author,
         onValueChange = viewModel::setAuthor,
-        label = { Text("Author") },
+        label = { Text(stringResource(R.string.send_author)) },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
       )
@@ -77,11 +79,11 @@ fun SendScreen(uri: String, onBack: () -> Unit, onDone: () -> Unit, viewModel: S
       }
 
       Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("Show author on frame", modifier = Modifier.weight(1f))
+        Text(stringResource(R.string.send_show_author), modifier = Modifier.weight(1f))
         Switch(checked = state.showAuthor, onCheckedChange = viewModel::setShowAuthor)
       }
       Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("Dither (for photos)", modifier = Modifier.weight(1f))
+        Text(stringResource(R.string.send_dither), modifier = Modifier.weight(1f))
         Switch(checked = state.mode == "dither", onCheckedChange = { viewModel.setMode(if (it) "dither" else "exact") })
       }
 
@@ -91,7 +93,7 @@ fun SendScreen(uri: String, onBack: () -> Unit, onDone: () -> Unit, viewModel: S
         onClick = viewModel::send,
         enabled = state.hasImage && !state.sending,
         modifier = Modifier.fillMaxWidth(),
-      ) { Text(if (state.sending) "Sending…" else "Send to frame") }
+      ) { Text(stringResource(if (state.sending) R.string.send_sending else R.string.send_submit)) }
     }
   }
 }

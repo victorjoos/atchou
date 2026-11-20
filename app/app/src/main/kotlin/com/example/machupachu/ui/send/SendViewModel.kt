@@ -1,5 +1,6 @@
 package com.example.machupachu.ui.send
 
+import com.example.machupachu.R
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
@@ -48,7 +49,7 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
         _state.update { it.copy(hasImage = true, error = null) }
         refreshPreview(immediately = true)
       } catch (e: Exception) {
-        _state.update { it.copy(error = "Could not read image: ${e.message}") }
+        _state.update { it.copy(error = getApplication<Application>().getString(R.string.send_error_read, e.message)) }
       }
     }
   }
@@ -85,7 +86,7 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
       } catch (e: kotlin.coroutines.cancellation.CancellationException) {
         throw e
       } catch (e: Exception) {
-        _state.update { it.copy(previewLoading = false, error = "Preview failed: ${e.message}") }
+        _state.update { it.copy(previewLoading = false, error = getApplication<Application>().getString(R.string.send_error_preview, e.message)) }
       }
     }
   }
@@ -99,7 +100,7 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
         machu.settings.lastAuthor = _state.value.author.trim()
         _state.update { it.copy(sending = false, done = true) }
       } catch (e: Exception) {
-        _state.update { it.copy(sending = false, error = "Send failed: ${e.message}") }
+        _state.update { it.copy(sending = false, error = getApplication<Application>().getString(R.string.send_error_send, e.message)) }
       }
     }
   }

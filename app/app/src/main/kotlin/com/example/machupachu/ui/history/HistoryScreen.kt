@@ -1,5 +1,7 @@
 package com.example.machupachu.ui.history
 
+import com.example.machupachu.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -49,10 +51,10 @@ fun HistoryScreen(onNewPost: () -> Unit, viewModel: HistoryViewModel = appViewMo
     topBar = {
       CenterAlignedTopAppBar(
         title = { Text("Machu Pachu") },
-        actions = { TextButton(onClick = { showSettings = true }) { Text("Server") } },
+        actions = { TextButton(onClick = { showSettings = true }) { Text(stringResource(R.string.history_server)) } },
       )
     },
-    floatingActionButton = { ExtendedFloatingActionButton(onClick = onNewPost) { Text("New post") } },
+    floatingActionButton = { ExtendedFloatingActionButton(onClick = onNewPost) { Text(stringResource(R.string.history_new_post)) } },
   ) { padding ->
     PullToRefreshBox(
       isRefreshing = state.loading,
@@ -61,7 +63,7 @@ fun HistoryScreen(onNewPost: () -> Unit, viewModel: HistoryViewModel = appViewMo
     ) {
       Column {
         state.error?.let {
-          Text("Error: $it", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+          Text(stringResource(R.string.history_error, it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
         }
         LazyVerticalGrid(
           columns = GridCells.Adaptive(minSize = 160.dp),
@@ -81,12 +83,12 @@ fun HistoryScreen(onNewPost: () -> Unit, viewModel: HistoryViewModel = appViewMo
   toDelete?.let { post ->
     AlertDialog(
       onDismissRequest = { toDelete = null },
-      title = { Text("Delete this post?") },
-      text = { Text("It will be removed for everyone.") },
+      title = { Text(stringResource(R.string.history_delete_title)) },
+      text = { Text(stringResource(R.string.history_delete_text)) },
       confirmButton = {
-        TextButton(onClick = { viewModel.delete(post); toDelete = null }) { Text("Delete") }
+        TextButton(onClick = { viewModel.delete(post); toDelete = null }) { Text(stringResource(R.string.history_delete)) }
       },
-      dismissButton = { TextButton(onClick = { toDelete = null }) { Text("Cancel") } },
+      dismissButton = { TextButton(onClick = { toDelete = null }) { Text(stringResource(R.string.history_cancel)) } },
     )
   }
 
@@ -94,12 +96,12 @@ fun HistoryScreen(onNewPost: () -> Unit, viewModel: HistoryViewModel = appViewMo
     var url by remember { mutableStateOf(viewModel.serverUrl) }
     AlertDialog(
       onDismissRequest = { showSettings = false },
-      title = { Text("Server URL") },
+      title = { Text(stringResource(R.string.history_server_url)) },
       text = { OutlinedTextField(value = url, onValueChange = { url = it }, singleLine = true) },
       confirmButton = {
-        TextButton(onClick = { viewModel.serverUrl = url; showSettings = false }) { Text("Save") }
+        TextButton(onClick = { viewModel.serverUrl = url; showSettings = false }) { Text(stringResource(R.string.history_save)) }
       },
-      dismissButton = { TextButton(onClick = { showSettings = false }) { Text("Cancel") } },
+      dismissButton = { TextButton(onClick = { showSettings = false }) { Text(stringResource(R.string.history_cancel)) } },
     )
   }
 }
@@ -109,7 +111,7 @@ private fun PostCard(post: Post, imageUrl: String, onDelete: () -> Unit) {
   Card(modifier = Modifier.fillMaxWidth()) {
     AsyncImage(
       model = imageUrl,
-      contentDescription = "Post by ${post.author}",
+      contentDescription = stringResource(R.string.history_post_by, post.author),
       contentScale = ContentScale.Crop,
       modifier = Modifier.fillMaxWidth().aspectRatio(5f / 3f),
     )
@@ -118,10 +120,10 @@ private fun PostCard(post: Post, imageUrl: String, onDelete: () -> Unit) {
       verticalAlignment = Alignment.CenterVertically,
     ) {
       Column(modifier = Modifier.weight(1f)) {
-        Text(post.author.ifBlank { "(no author)" }, style = MaterialTheme.typography.titleSmall)
+        Text(post.author.ifBlank { stringResource(R.string.history_no_author) }, style = MaterialTheme.typography.titleSmall)
         Text(post.createdAt.take(10), style = MaterialTheme.typography.bodySmall)
       }
-      TextButton(onClick = onDelete) { Text("Delete") }
+      TextButton(onClick = onDelete) { Text(stringResource(R.string.history_delete)) }
     }
   }
 }

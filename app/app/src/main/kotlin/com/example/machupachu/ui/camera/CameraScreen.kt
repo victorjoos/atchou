@@ -1,5 +1,7 @@
 package com.example.machupachu.ui.camera
 
+import com.example.machupachu.R
+import androidx.compose.ui.res.stringResource
 import android.Manifest
 import android.content.Context
 import android.app.Activity
@@ -96,13 +98,12 @@ fun CameraScreen(onImage: (String) -> Unit, onHistory: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
       ) {
         Text(
-          if (permissionAsked) "Camera access was denied. You can still pick a picture from your gallery."
-          else "Camera access is needed to take pictures.",
+          stringResource(if (permissionAsked) R.string.camera_permission_denied else R.string.camera_permission_needed),
           color = Color.White,
         )
-        Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) { Text("Allow camera") }
-        Button(onClick = pickFromGallery) { Text("Choose from gallery") }
-        TextButton(onClick = onHistory) { Text("History") }
+        Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) { Text(stringResource(R.string.camera_allow)) }
+        Button(onClick = pickFromGallery) { Text(stringResource(R.string.camera_choose_gallery)) }
+        TextButton(onClick = onHistory) { Text(stringResource(R.string.camera_history)) }
       }
     }
   }
@@ -127,7 +128,7 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
       provider.unbindAll()
       provider.bindToLifecycle(lifecycleOwner, selector, preview, imageCapture)
     } catch (e: Exception) {
-      error = "Camera unavailable: ${e.message}"
+      error = context.getString(R.string.camera_unavailable, e.message)
     }
   }
 
@@ -159,16 +160,16 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
     label = "labelAngle",
   )
   val flip = @Composable {
-    TextButton(onClick = { useBack = !useBack }) { Text("Flip", color = Color.White, modifier = Modifier.rotate(labelAngle)) }
+    TextButton(onClick = { useBack = !useBack }) { Text(stringResource(R.string.camera_flip), color = Color.White, modifier = Modifier.rotate(labelAngle)) }
   }
   val gallery = @Composable {
     TextButton(onClick = onGallery, modifier = Modifier.size(width = 96.dp, height = 48.dp)) {
-      Text("Gallery", color = Color.White, modifier = Modifier.rotate(labelAngle))
+      Text(stringResource(R.string.camera_gallery), color = Color.White, modifier = Modifier.rotate(labelAngle))
     }
   }
   val history = @Composable {
     TextButton(onClick = onHistory, modifier = Modifier.size(width = 96.dp, height = 48.dp)) {
-      Text("History", color = Color.White, modifier = Modifier.rotate(labelAngle))
+      Text(stringResource(R.string.camera_history), color = Color.White, modifier = Modifier.rotate(labelAngle))
     }
   }
   val shutter = @Composable {
@@ -184,7 +185,7 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
             context,
             imageCapture,
             onImage = { capturing = false; onImage(it) },
-            onError = { capturing = false; error = "Capture failed: $it" },
+            onError = { capturing = false; error = context.getString(R.string.camera_capture_failed, it) },
           )
         },
     )
