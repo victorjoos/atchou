@@ -1,9 +1,7 @@
 package com.example.machupachu.ui.send
 
 import android.graphics.BitmapFactory
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.net.toUri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,17 +34,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.machupachu.ui.appViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SendScreen(onDone: () -> Unit, viewModel: SendViewModel = viewModel()) {
+fun SendScreen(uri: String, onBack: () -> Unit, onDone: () -> Unit, viewModel: SendViewModel = appViewModel { SendViewModel(it) }) {
   val state by viewModel.state.collectAsStateWithLifecycle()
-  val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-    uri?.let(viewModel::onPicked)
-  }
-  fun pick() = picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
 
+  LaunchedEffect(uri) { viewModel.onPicked(uri.toUri()) }
   LaunchedEffect(state.done) { if (state.done) onDone() }
 
   Scaffold(topBar = { TopAppBar(title = { Text("New post") }) }) { padding ->
@@ -63,12 +58,10 @@ fun SendScreen(onDone: () -> Unit, viewModel: SendViewModel = viewModel()) {
         }
         if (bitmap != null) {
           Image(bitmap, contentDescription = "Preview", contentScale = ContentScale.Fit, modifier = Modifier.fillMaxWidth())
-        } else if (!state.previewLoading) {
-          OutlinedButton(onClick = ::pick) { Text("Choose a picture") }
         }
-        if (state.previewLoading) CircularProgressIndicator()
+        if (state.previewLoading || (!state.hasImage && state.error == null)) CircularProgressIndicator()
       }
-      if (state.hasImage) OutlinedButton(onClick = ::pick) { Text("Choose another picture") }
+      OutlinedButton(onClick = onBack) { Text("Retake") }
 
       OutlinedTextField(
         value = state.author,

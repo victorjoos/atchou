@@ -10,7 +10,10 @@ A family app to send drawings, photos and text to a 7" Waveshare PhotoPainter
 
 ## Android app
 1. **Login** via Google Sign-In (added after the MVP; see tasks).
-2. **Send a picture**: gallery or camera, then an in-app editor:
+1b. **Camera-first**: the app opens on a camera view (photos and drawings);
+    gallery picking is a secondary option. For drawings, the sheet is auto-detected
+    and flattened (perspective-corrected) before sending.
+2. **Send a picture**: then an in-app editor:
    crop to the panel aspect ratio (5:3), rotate, brightness/contrast,
    toggle "show author overlay".
 3. **Preview**: server-rendered 6-color dithered preview before sending.

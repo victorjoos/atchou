@@ -10,13 +10,20 @@ deployment, firmware.
    against the real panel later.)
 3. ✅ **Post API v0**: upload (image + author + options), list, get thumbnail/preview,
    delete, author suggestions. Open endpoints (no auth yet).
-4. ✅ **Android: project + upload flow**: pick/capture photo, author field with
+4. ✅ **Android: project + upload flow**: send screen, author field with
    suggestions, send, show server preview.
 5. ✅ **Android: history** (basic grid + delete done; reschedule/pin pending editor): gallery of all posts, delete.
 6. **Android: editor**: crop (5:3), rotate, brightness/contrast, author-overlay
    toggle (overlay rendered by server), "show on date", pin, exclude.
 7. **Android: paint/text canvas**: 6-color palette, brush, eraser, text; uploads
    as a post (exact palette, no dithering).
+
+4b. ✅ **Android: camera-first start screen**: CameraX viewfinder + shutter,
+    flip, gallery picker (secondary), history button; capture goes to the send screen.
+4c. **Android: drawing mode** (next): Photo/Drawing toggle on the camera; for
+    drawings auto-detect the sheet's corners and perspective-correct it to a flat
+    5:3 image (on-device, e.g. OpenCV or ML Kit Document Scanner), with manual
+    corner adjustment as fallback; boost contrast/white balance for paper.
 
 ## Phase 2 – Frame-facing server logic
 8. **Scheduler**: day queue (newest first, overflow to next days), decay-weighted
