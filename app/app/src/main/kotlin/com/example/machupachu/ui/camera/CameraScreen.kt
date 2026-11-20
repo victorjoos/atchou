@@ -15,6 +15,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,7 +40,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -94,7 +98,8 @@ fun CameraScreen(onImage: (String) -> Unit, onHistory: () -> Unit) {
 private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHistory: () -> Unit) {
   val context = LocalContext.current
   val lifecycleOwner = LocalLifecycleOwner.current
-  val previewView = remember { PreviewView(context) }
+  // FIT_CENTER shows the whole captured frame so the crop overlay lines up with it.
+  val previewView = remember { PreviewView(context).apply { scaleType = PreviewView.ScaleType.FIT_CENTER } }
   val imageCapture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY).build() }
   var useBack by remember { mutableStateOf(true) }
   var capturing by remember { mutableStateOf(false) }
@@ -114,6 +119,7 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
 
   Box(modifier = Modifier.fillMaxSize()) {
     AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+    CropOverlay(modifier = Modifier.fillMaxSize())
 
     Row(modifier = Modifier.statusBarsPadding().fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
       TextButton(onClick = { useBack = !useBack }) { Text("Flip", color = Color.White) }
@@ -163,4 +169,34 @@ private fun takePicture(context: Context, capture: ImageCapture, onImage: (Strin
       override fun onError(exception: ImageCaptureException) = onError(exception.message ?: "unknown error")
     },
   )
+}
+
+private const val FRAME_ASPECT = 5f / 3f // panel width / height
+private const val CAPTURE_LONG = 4f // ImageCapture default is 4:3
+private const val CAPTURE_SHORT = 3f
+
+/** Dims the parts of the captured frame that the server will crop away. */
+@Composable
+private fun CropOverlay(modifier: Modifier = Modifier) {
+  Canvas(modifier = modifier) {
+    val portrait = size.height >= size.width
+    val imageAspect = if (portrait) CAPTURE_SHORT / CAPTURE_LONG else CAPTURE_LONG / CAPTURE_SHORT
+    // Displayed image rect (FIT_CENTER inside the view).
+    val imgW = if (size.width / size.height < imageAspect) size.width else size.height * imageAspect
+    val imgH = imgW / imageAspect
+    val imgLeft = (size.width - imgW) / 2
+    val imgTop = (size.height - imgH) / 2
+    // Centered 5:3 crop inside the image rect, matching the server's default crop.
+    val cropW = if (imageAspect < FRAME_ASPECT) imgW else imgH * FRAME_ASPECT
+    val cropH = cropW / FRAME_ASPECT
+    val cropLeft = imgLeft + (imgW - cropW) / 2
+    val cropTop = imgTop + (imgH - cropH) / 2
+    val dim = Color.Black.copy(alpha = 0.55f)
+
+    drawRect(dim, Offset(0f, 0f), Size(size.width, cropTop))
+    drawRect(dim, Offset(0f, cropTop + cropH), Size(size.width, size.height - cropTop - cropH))
+    drawRect(dim, Offset(0f, cropTop), Size(cropLeft, cropH))
+    drawRect(dim, Offset(cropLeft + cropW, cropTop), Size(size.width - cropLeft - cropW, cropH))
+    drawRect(Color.White, Offset(cropLeft, cropTop), Size(cropW, cropH), style = Stroke(width = 3f))
+  }
 }
