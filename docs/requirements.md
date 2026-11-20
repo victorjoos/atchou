@@ -58,6 +58,8 @@ Wake, connect Wi-Fi, poll, download buffer, refresh panel, report battery,
 deep sleep until `next_wake_at`.
 
 ## Non-functional
+- **Language: French everywhere.** All user-facing text (app UI, server error
+  messages, defaults like date formats) is in French; no English strings shown to users.
 - One frame in v1; data model should not preclude several.
 - Phone sends original + edit parameters (downscaled to a sane size).
 - No moderation beyond "everyone can delete".
