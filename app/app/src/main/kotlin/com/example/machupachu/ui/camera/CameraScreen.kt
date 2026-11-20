@@ -2,7 +2,10 @@ package com.example.machupachu.ui.camera
 
 import android.Manifest
 import android.content.Context
-import android.content.res.Configuration
+import android.app.Activity
+import android.content.pm.ActivityInfo
+import android.view.OrientationEventListener
+import android.view.Surface
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -22,12 +25,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
@@ -35,7 +36,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,7 +50,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -73,6 +76,13 @@ fun CameraScreen(onImage: (String) -> Unit, onHistory: () -> Unit) {
     uri?.let { onImage(it.toString()) }
   }
   val pickFromGallery = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+
+  // Like a stock camera app: the UI stays put and only the labels turn with the phone.
+  DisposableEffect(context) {
+    val activity = context as? Activity
+    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    onDispose { activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED }
+  }
 
   LaunchedEffect(Unit) { if (!hasPermission) permissionLauncher.launch(Manifest.permission.CAMERA) }
 
@@ -121,13 +131,45 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
     }
   }
 
-  val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-  val flip = @Composable { TextButton(onClick = { useBack = !useBack }) { Text("Flip", color = Color.White) } }
+  // Physical orientation of the phone (the UI itself is locked to portrait).
+  var deviceRotation by remember { mutableStateOf(Surface.ROTATION_0) }
+  DisposableEffect(context) {
+    val listener = object : OrientationEventListener(context) {
+      override fun onOrientationChanged(orientation: Int) {
+        if (orientation == ORIENTATION_UNKNOWN) return
+        deviceRotation = when (orientation) {
+          in 45..134 -> Surface.ROTATION_270
+          in 225..314 -> Surface.ROTATION_90
+          in 135..224 -> return // upside down: keep the last state
+          else -> Surface.ROTATION_0
+        }
+        imageCapture.targetRotation = deviceRotation
+      }
+    }
+    listener.enable()
+    onDispose { listener.disable() }
+  }
+  val heldLandscape = deviceRotation != Surface.ROTATION_0
+  val labelAngle by animateFloatAsState(
+    when (deviceRotation) {
+      Surface.ROTATION_90 -> 90f
+      Surface.ROTATION_270 -> -90f
+      else -> 0f
+    },
+    label = "labelAngle",
+  )
+  val flip = @Composable {
+    TextButton(onClick = { useBack = !useBack }) { Text("Flip", color = Color.White, modifier = Modifier.rotate(labelAngle)) }
+  }
   val gallery = @Composable {
-    TextButton(onClick = onGallery, modifier = Modifier.size(width = 96.dp, height = 48.dp)) { Text("Gallery", color = Color.White) }
+    TextButton(onClick = onGallery, modifier = Modifier.size(width = 96.dp, height = 48.dp)) {
+      Text("Gallery", color = Color.White, modifier = Modifier.rotate(labelAngle))
+    }
   }
   val history = @Composable {
-    TextButton(onClick = onHistory, modifier = Modifier.size(width = 96.dp, height = 48.dp)) { Text("History", color = Color.White) }
+    TextButton(onClick = onHistory, modifier = Modifier.size(width = 96.dp, height = 48.dp)) {
+      Text("History", color = Color.White, modifier = Modifier.rotate(labelAngle))
+    }
   }
   val shutter = @Composable {
     Box(
@@ -150,24 +192,9 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
 
   Box(modifier = Modifier.fillMaxSize()) {
     AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
-    CropOverlay(modifier = Modifier.fillMaxSize())
+    CropOverlay(heldLandscape = heldLandscape, modifier = Modifier.fillMaxSize())
 
-    if (landscape) {
-      // Same arrangement as portrait, rotated a quarter turn: flip top-left, history/shutter/gallery down the right.
-      Box(modifier = Modifier.align(Alignment.TopStart).safeDrawingPadding().padding(8.dp)) { flip() }
-      Column(
-        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().safeDrawingPadding().padding(end = 16.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally,
-      ) {
-        history()
-        shutter()
-        gallery()
-      }
-      error?.let {
-        Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.BottomStart).safeDrawingPadding().padding(16.dp))
-      }
-    } else {
+    run {
       Row(modifier = Modifier.statusBarsPadding().fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) { flip() }
       Column(modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 24.dp)) {
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
@@ -203,7 +230,7 @@ private const val CAPTURE_SHORT = 3f
 
 /** Dims the parts of the captured frame that the server will crop away. */
 @Composable
-private fun CropOverlay(modifier: Modifier = Modifier) {
+private fun CropOverlay(heldLandscape: Boolean, modifier: Modifier = Modifier) {
   Canvas(modifier = modifier) {
     val portrait = size.height >= size.width
     val imageAspect = if (portrait) CAPTURE_SHORT / CAPTURE_LONG else CAPTURE_LONG / CAPTURE_SHORT
@@ -213,8 +240,10 @@ private fun CropOverlay(modifier: Modifier = Modifier) {
     val imgLeft = (size.width - imgW) / 2
     val imgTop = (size.height - imgH) / 2
     // Centered 5:3 crop inside the image rect, matching the server's default crop.
-    val cropW = if (imageAspect < FRAME_ASPECT) imgW else imgH * FRAME_ASPECT
-    val cropH = cropW / FRAME_ASPECT
+    // Held sideways, the captured frame is landscape, so the 5:3 crop appears as 3:5 on the portrait screen.
+    val frameAspect = if (heldLandscape) 1f / FRAME_ASPECT else FRAME_ASPECT
+    val cropW = if (imageAspect < frameAspect) imgW else imgH * frameAspect
+    val cropH = cropW / frameAspect
     val cropLeft = imgLeft + (imgW - cropW) / 2
     val cropTop = imgTop + (imgH - cropH) / 2
     val dim = Color.Black.copy(alpha = 0.55f)
