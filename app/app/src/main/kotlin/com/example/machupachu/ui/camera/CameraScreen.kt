@@ -2,6 +2,7 @@ package com.example.machupachu.ui.camera
 
 import android.Manifest
 import android.content.Context
+import android.content.res.Configuration
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -21,10 +22,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
@@ -44,6 +47,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -117,42 +121,65 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
     }
   }
 
+  val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+  val flip = @Composable { TextButton(onClick = { useBack = !useBack }) { Text("Flip", color = Color.White) } }
+  val gallery = @Composable {
+    TextButton(onClick = onGallery, modifier = Modifier.size(width = 96.dp, height = 48.dp)) { Text("Gallery", color = Color.White) }
+  }
+  val history = @Composable {
+    TextButton(onClick = onHistory, modifier = Modifier.size(width = 96.dp, height = 48.dp)) { Text("History", color = Color.White) }
+  }
+  val shutter = @Composable {
+    Box(
+      modifier = Modifier
+        .size(76.dp)
+        .border(4.dp, Color.White, CircleShape)
+        .padding(8.dp)
+        .background(if (capturing) Color.Gray else Color.White, CircleShape)
+        .clickable(enabled = !capturing) {
+          capturing = true
+          takePicture(
+            context,
+            imageCapture,
+            onImage = { capturing = false; onImage(it) },
+            onError = { capturing = false; error = "Capture failed: $it" },
+          )
+        },
+    )
+  }
+
   Box(modifier = Modifier.fillMaxSize()) {
     AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
     CropOverlay(modifier = Modifier.fillMaxSize())
 
-    Row(modifier = Modifier.statusBarsPadding().fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
-      TextButton(onClick = { useBack = !useBack }) { Text("Flip", color = Color.White) }
-    }
-
-    Column(modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 24.dp)) {
-      error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
-      Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+    if (landscape) {
+      Column(
+        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().safeDrawingPadding().padding(end = 16.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally,
       ) {
-        TextButton(onClick = onGallery, modifier = Modifier.size(width = 96.dp, height = 48.dp)) {
-          Text("Gallery", color = Color.White)
+        flip()
+        shutter()
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+          gallery()
+          history()
         }
-        Box(
-          modifier = Modifier
-            .size(76.dp)
-            .border(4.dp, Color.White, CircleShape)
-            .padding(8.dp)
-            .background(if (capturing) Color.Gray else Color.White, CircleShape)
-            .clickable(enabled = !capturing) {
-              capturing = true
-              takePicture(
-                context,
-                imageCapture,
-                onImage = { capturing = false; onImage(it) },
-                onError = { capturing = false; error = "Capture failed: $it" },
-              )
-            },
-        )
-        TextButton(onClick = onHistory, modifier = Modifier.size(width = 96.dp, height = 48.dp)) {
-          Text("History", color = Color.White)
+      }
+      error?.let {
+        Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.BottomStart).safeDrawingPadding().padding(16.dp))
+      }
+    } else {
+      Row(modifier = Modifier.statusBarsPadding().fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) { flip() }
+      Column(modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 24.dp)) {
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
+        Row(
+          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          gallery()
+          shutter()
+          history()
         }
       }
     }
