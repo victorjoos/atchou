@@ -20,6 +20,8 @@ deployment, firmware.
 
 4b. ✅ **Android: camera-first start screen**: CameraX viewfinder + shutter,
     flip, gallery picker (secondary), history button; capture goes to the send screen.
+    Also done: dimmed overlay showing the cropped area; UI locked to portrait with
+    labels and crop box rotating with the phone (like a stock camera app).
 4c. **Android: drawing mode** (next): Photo/Drawing toggle on the camera; for
     drawings auto-detect the sheet's corners and perspective-correct it to a flat
     5:3 image (on-device, e.g. OpenCV or ML Kit Document Scanner), with manual
@@ -43,4 +45,6 @@ deployment, firmware.
 
 ## Open decisions
 - Final rotation decay formula and default slot times.
-- Android min SDK and image upload size limit.
+- Image upload size limit (the app currently downscales to 1600 px; no server cap).
+- Verify the panel's native color codes (currently from memory).
+- Decided: Android min SDK 28.
