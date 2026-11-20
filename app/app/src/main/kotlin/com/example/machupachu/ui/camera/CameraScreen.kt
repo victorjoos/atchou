@@ -153,17 +153,16 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
     CropOverlay(modifier = Modifier.fillMaxSize())
 
     if (landscape) {
+      // Same arrangement as portrait, rotated a quarter turn: flip top-left, history/shutter/gallery down the right.
+      Box(modifier = Modifier.align(Alignment.TopStart).safeDrawingPadding().padding(8.dp)) { flip() }
       Column(
         modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().safeDrawingPadding().padding(end = 16.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
       ) {
-        flip()
+        history()
         shutter()
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-          gallery()
-          history()
-        }
+        gallery()
       }
       error?.let {
         Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.BottomStart).safeDrawingPadding().padding(16.dp))
