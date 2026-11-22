@@ -11,7 +11,8 @@ _Last updated: 2026-11-20_
 - Image pipeline: EXIF transpose, rotate, crop (5:3), resize to 800×480, brightness/contrast, quantize to the 6 panel colors (dither or exact palette), author overlay.
 - API: preview, create, list, get, image, patch, delete, authors.
 - Writes a packed `panel.bin` for the frame.
-- 3 passing tests.
+- Scheduler (day queue newest-first with carry-over, weighted rotation pool with configurable decay, pin boost, 06:00–22:00 window) and frame API (`/frame/image`, per-device tokens in DB, ETag, battery, `X-Next-Wake-At`); `scripts/frame_sim.py` simulator. See `server/README.md`.
+- 9 passing tests.
 
 **Android app** (`app/`, Kotlin + Compose)
 - Opens on the camera, with a dimmed overlay showing what gets cropped.
@@ -24,17 +25,15 @@ _Last updated: 2026-11-20_
 
 ## Next
 
-1. **6. Editor:** adjustable crop, rotate, brightness/contrast, show-on date, pin, exclude from rotation (needs PATCH in the app's API client and history controls).
-2. **7. Paint/text canvas** limited to the 6 colors.
-3. **8–10. Scheduler and frame API:** day queue, rotation pool with age decay, device token, ETag, battery, `next_wake_at` (~15 min to 24 h; quiet days wake once, busy days ~hourly), frame simulator script.
-4. **11. Google login** with an email allowlist.
-5. **12. Deployment:** Docker + Caddy on a VPS.
-6. **13. Palette tuning** against the real panel.
-7. **14. ESP32-S3 firmware.**
+1. **11. Google login** with an email allowlist (protects app endpoints; frame endpoints use device tokens only).
+2. **6. Editor:** adjustable crop, rotate, brightness/contrast, show-on date, pin, exclude from rotation (needs PATCH in the app's API client and history controls).
+3. **7. Paint/text canvas** limited to the 6 colors.
+4. **12. Deployment:** Docker + Caddy on a VPS.
+5. **13. Palette tuning** against the real panel.
+6. **14. ESP32-S3 firmware.**
 
 ## Open decisions
-- Rotation decay formula.
-- Default slot times (e.g. 08:00 and 18:00).
+- Tune `MACHU_DECAY_HALF_LIFE_DAYS` (default 365) once the app is in use.
 - Upload size limit.
 - Verify the panel's native color codes (currently from memory: black 0, white 1, yellow 2, red 3, blue 5, green 6).
 

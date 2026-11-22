@@ -35,11 +35,11 @@ deployment, firmware.
     `strings.xml` in French (Google sign-in and canvas tool labels still to do).
 
 ## Phase 2 – Frame-facing server logic
-8. **Scheduler**: day queue (newest first, overflow to next days), decay-weighted
+8. ✅ **Scheduler**: day queue (newest first, overflow to next days), decay-weighted
    rotation pool, pin/exclude; unit tests.
-9. **Frame API**: device token, current image + ETag, native packed buffer,
+9. ✅ **Frame API**: device token, current image + ETag, native packed buffer,
    battery report, `next_wake_at` logic (quiet/busy/scheduled, clamps); unit tests.
-10. **Frame simulator script** that polls like the firmware would.
+10. ✅ **Frame simulator script** that polls like the firmware would.
 
 ## Phase 3 – Hardening and deployment
 11. **Auth**: Google ID-token verification, email allowlist in config,

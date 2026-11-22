@@ -1,7 +1,8 @@
 import json
 import os
 from dataclasses import asdict
-from datetime import date
+import random
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -9,7 +10,8 @@ from fastapi.responses import FileResponse, Response
 from PIL import UnidentifiedImageError
 from pydantic import BaseModel
 
-from . import db, imaging
+from . import db, frame, imaging
+from .config import Config
 
 DEFAULT_KIDS = ""  # comma-separated names pre-filled as author suggestions
 
@@ -51,12 +53,16 @@ def _load(upload_bytes: bytes):
         raise HTTPException(400, "image invalide")
 
 
-def create_app(data_dir: Path | None = None) -> FastAPI:
+def create_app(data_dir: Path | None = None, config: Config | None = None, now_fn=None, rng=None) -> FastAPI:
     data_dir = Path(data_dir or os.environ.get("MACHU_DATA_DIR", "data"))
     (data_dir / "posts").mkdir(parents=True, exist_ok=True)
     conn = db.connect(data_dir / "machu.sqlite")
     kids = [k.strip() for k in os.environ.get("MACHU_KID_NAMES", DEFAULT_KIDS).split(",") if k.strip()]
     app = FastAPI(title="Machu Pachu")
+    app.include_router(frame.make_router(
+        conn, data_dir, config or Config.from_env(),
+        now_fn or (lambda: datetime.now(timezone.utc)), rng or random.Random(),
+    ))
 
     def post_dir(post_id: int) -> Path:
         return data_dir / "posts" / str(post_id)
