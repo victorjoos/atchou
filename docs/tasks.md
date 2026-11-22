@@ -22,10 +22,12 @@ deployment, firmware.
     flip, gallery picker (secondary), history button; capture goes to the send screen.
     Also done: dimmed overlay showing the cropped area; UI locked to portrait with
     labels and crop box rotating with the phone (like a stock camera app).
-4c. **Android: drawing mode** (next): Photo/Drawing toggle on the camera; for
+4c. ✅ **Android: drawing mode**: Photo/Drawing toggle on the camera; for
     drawings auto-detect the sheet's corners and perspective-correct it to a flat
     5:3 image (on-device, e.g. OpenCV or ML Kit Document Scanner), with manual
     corner adjustment as fallback; boost contrast/white balance for paper.
+    Done with the ML Kit Document Scanner (needs Play Services; its UI covers
+    auto-detect, manual corners and paper cleanup). Verified in the emulator.
 7b. ✅ (existing screens) **French everywhere**: all user-facing text in French (app UI strings moved to
     `strings.xml` with a French default, server error messages, any text rendered
     on the image such as paint-canvas/text tool labels, Google sign-in prompts).

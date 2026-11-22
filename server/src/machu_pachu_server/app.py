@@ -36,8 +36,8 @@ def _parse_crop(crop: str | None):
 def _build_params(crop, rotate, brightness, contrast, author, show_author, mode) -> imaging.EditParams:
     if rotate % 90:
         raise HTTPException(422, "la rotation doit être un multiple de 90")
-    if mode not in ("dither", "exact"):
-        raise HTTPException(422, "le mode doit être « dither » ou « exact »")
+    if mode not in ("dither", "exact", "drawing"):
+        raise HTTPException(422, "le mode doit être « dither », « exact » ou « drawing »")
     return imaging.EditParams(
         crop=_parse_crop(crop), rotate=rotate, brightness=brightness, contrast=contrast,
         author=author, show_author=show_author, mode=mode,

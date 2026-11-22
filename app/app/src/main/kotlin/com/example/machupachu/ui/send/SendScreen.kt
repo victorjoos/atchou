@@ -40,10 +40,10 @@ import com.example.machupachu.ui.appViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SendScreen(uri: String, onBack: () -> Unit, onDone: () -> Unit, viewModel: SendViewModel = appViewModel { SendViewModel(it) }) {
+fun SendScreen(uri: String, drawing: Boolean, onBack: () -> Unit, onDone: () -> Unit, viewModel: SendViewModel = appViewModel { SendViewModel(it) }) {
   val state by viewModel.state.collectAsStateWithLifecycle()
 
-  LaunchedEffect(uri) { viewModel.onPicked(uri.toUri()) }
+  LaunchedEffect(uri) { viewModel.onPicked(uri.toUri(), drawing) }
   LaunchedEffect(state.done) { if (state.done) onDone() }
 
   Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.send_title)) }) }) { padding ->
@@ -84,7 +84,7 @@ fun SendScreen(uri: String, onBack: () -> Unit, onDone: () -> Unit, viewModel: S
       }
       Row(verticalAlignment = Alignment.CenterVertically) {
         Text(stringResource(R.string.send_dither), modifier = Modifier.weight(1f))
-        Switch(checked = state.mode == "dither", onCheckedChange = { viewModel.setMode(if (it) "dither" else "exact") })
+        Switch(checked = state.mode == "dither", onCheckedChange = { viewModel.setDither(it) })
       }
 
       state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }

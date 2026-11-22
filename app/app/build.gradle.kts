@@ -89,6 +89,9 @@ dependencies {
   implementation(libs.androidx.camera.lifecycle)
   implementation(libs.androidx.camera.view)
 
+  // Drawing mode: sheet detection and perspective correction
+  implementation(libs.play.services.mlkit.document.scanner)
+
   // Navigation
   implementation(libs.androidx.navigation3.ui)
   implementation(libs.androidx.navigation3.runtime)

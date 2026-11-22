@@ -17,20 +17,20 @@ _Last updated: 2026-11-20_
 - Opens on the camera, with a dimmed overlay showing what gets cropped.
 - Camera screen is portrait-locked; labels and crop box rotate with the phone.
 - Gallery picker as a secondary option.
+- Photo/Dessin toggle: Dessin launches the ML Kit Document Scanner (auto-detect, manual corners, flatten); result goes to the send screen with dithering off and the server's `drawing` mode (exact palette, paper levelled to white). Verified in the emulator (before the `drawing` mode was added).
 - Send screen: server-rendered preview, author chips + free text, author-overlay and dither toggles.
 - History screen: grid, delete, pull-to-refresh, server-URL setting.
 - Tested end to end in the emulator against the local server.
 
 ## Next
 
-1. **4c. Drawing mode:** Photo/Drawing toggle, auto-detect sheet corners, flatten to 5:3, manual corner adjustment fallback, paper contrast boost.
-2. **6. Editor:** adjustable crop, rotate, brightness/contrast, show-on date, pin, exclude from rotation (needs PATCH in the app's API client and history controls).
-3. **7. Paint/text canvas** limited to the 6 colors.
-4. **8–10. Scheduler and frame API:** day queue, rotation pool with age decay, device token, ETag, battery, `next_wake_at` (~15 min to 24 h; quiet days wake once, busy days ~hourly), frame simulator script.
-5. **11. Google login** with an email allowlist.
-6. **12. Deployment:** Docker + Caddy on a VPS.
-7. **13. Palette tuning** against the real panel.
-8. **14. ESP32-S3 firmware.**
+1. **6. Editor:** adjustable crop, rotate, brightness/contrast, show-on date, pin, exclude from rotation (needs PATCH in the app's API client and history controls).
+2. **7. Paint/text canvas** limited to the 6 colors.
+3. **8–10. Scheduler and frame API:** day queue, rotation pool with age decay, device token, ETag, battery, `next_wake_at` (~15 min to 24 h; quiet days wake once, busy days ~hourly), frame simulator script.
+4. **11. Google login** with an email allowlist.
+5. **12. Deployment:** Docker + Caddy on a VPS.
+6. **13. Palette tuning** against the real panel.
+7. **14. ESP32-S3 firmware.**
 
 ## Open decisions
 - Rotation decay formula.

@@ -20,7 +20,8 @@ PALETTE = [
     ("green", (0, 255, 0), 0x6),
 ]
 
-Mode = Literal["dither", "exact"]
+# "drawing" = exact palette (no dithering) after levelling the paper to white.
+Mode = Literal["dither", "exact", "drawing"]
 
 
 @dataclass
@@ -87,6 +88,9 @@ def render(img: Image.Image, params: EditParams) -> Image.Image:
         img = ImageEnhance.Brightness(img).enhance(params.brightness)
     if params.contrast != 1.0:
         img = ImageEnhance.Contrast(img).enhance(params.contrast)
+    if params.mode == "drawing":
+        # Per-channel stretch: paper (the brightest bulk) -> white, also fixing color casts; ink stays dark.
+        img = ImageOps.autocontrast(img, cutoff=(1, 5))
     dither = Image.Dither.FLOYDSTEINBERG if params.mode == "dither" else Image.Dither.NONE
     out = img.quantize(palette=_palette_image(), dither=dither)
     if params.show_author and params.author and params.author.strip():

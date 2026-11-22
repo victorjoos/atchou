@@ -7,4 +7,4 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object History : NavKey
 
-@Serializable data class Send(val uri: String) : NavKey
+@Serializable data class Send(val uri: String, val drawing: Boolean = false) : NavKey

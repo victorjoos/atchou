@@ -31,6 +31,14 @@ def test_render_uses_only_palette_colors():
     assert len(imaging.to_panel_buffer(out)) == 800 * 480 // 2
 
 
+def test_drawing_mode_whitens_gray_paper():
+    paper = Image.new("RGB", (1000, 600), (190, 185, 175))
+    paper.paste((20, 20, 20), (100, 100, 500, 140))
+    out = imaging.render(paper, imaging.EditParams(mode="drawing")).convert("RGB")
+    assert out.getpixel((790, 470)) == (255, 255, 255)
+    assert out.getpixel((300, 95)) == (0, 0, 0)
+
+
 def test_post_lifecycle(client):
     r = client.post("/posts", files={"image": ("a.jpg", photo(), "image/jpeg")},
                     data={"author": "Emma", "show_author": "true", "show_on": "2026-12-01"})

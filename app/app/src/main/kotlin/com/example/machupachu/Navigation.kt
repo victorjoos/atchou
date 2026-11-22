@@ -26,7 +26,7 @@ fun MainNavigation() {
       entryProvider {
         entry<Camera> {
           CameraScreen(
-            onImage = { uri -> backStack.add(Send(uri)) },
+            onImage = { uri, drawing -> backStack.add(Send(uri, drawing)) },
             onHistory = { backStack.add(History) },
           )
         }
@@ -34,6 +34,7 @@ fun MainNavigation() {
         entry<Send> { key ->
           SendScreen(
             uri = key.uri,
+            drawing = key.drawing,
             onBack = { backStack.removeLastOrNull() },
             onDone = {
               backStack.removeLastOrNull()

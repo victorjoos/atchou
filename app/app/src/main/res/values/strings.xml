@@ -11,6 +11,10 @@
     <string name="camera_unavailable">Caméra indisponible : %1$s</string>
     <string name="camera_capture_failed">Échec de la prise de vue : %1$s</string>
 
+    <string name="camera_mode_photo">Photo</string>
+    <string name="camera_mode_drawing">Dessin</string>
+    <string name="camera_scan_failed">Échec du scan du dessin : %1$s</string>
+
     <string name="send_title">Nouvelle publication</string>
     <string name="send_preview">Aperçu</string>
     <string name="send_retake">Reprendre</string>

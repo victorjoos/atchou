@@ -33,6 +33,7 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
   private val _state = MutableStateFlow(SendState(author = machu.settings.lastAuthor))
   val state: StateFlow<SendState> = _state
 
+  private var isDrawing = false
   private var image: ByteArray? = null
   private var previewJob: Job? = null
 
@@ -42,7 +43,10 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
     }
   }
 
-  fun onPicked(uri: Uri) {
+  fun onPicked(uri: Uri, drawing: Boolean = false) {
+    // Drawings use the exact palette: dithering would add noise to flat colors.
+    isDrawing = drawing
+    if (drawing) _state.update { it.copy(mode = "drawing") }
     viewModelScope.launch {
       try {
         image = loadForUpload(getApplication(), uri)
@@ -64,7 +68,9 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
     refreshPreview(immediately = true)
   }
 
-  fun setMode(value: String) {
+  fun setDither(on: Boolean) = setMode(if (on) "dither" else if (isDrawing) "drawing" else "exact")
+
+  private fun setMode(value: String) {
     _state.update { it.copy(mode = value) }
     refreshPreview(immediately = true)
   }

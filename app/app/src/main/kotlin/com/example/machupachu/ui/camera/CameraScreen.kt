@@ -11,6 +11,7 @@ import android.view.Surface
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -38,6 +39,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -62,7 +66,7 @@ import androidx.core.net.toUri
 import java.io.File
 
 @Composable
-fun CameraScreen(onImage: (String) -> Unit, onHistory: () -> Unit) {
+fun CameraScreen(onImage: (String, Boolean) -> Unit, onHistory: () -> Unit) {
   val context = LocalContext.current
   var hasPermission by remember {
     mutableStateOf(
@@ -75,7 +79,7 @@ fun CameraScreen(onImage: (String) -> Unit, onHistory: () -> Unit) {
     permissionAsked = true
   }
   val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
-    uri?.let { onImage(it.toString()) }
+    uri?.let { onImage(it.toString(), false) }
   }
   val pickFromGallery = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
 
@@ -110,7 +114,7 @@ fun CameraScreen(onImage: (String) -> Unit, onHistory: () -> Unit) {
 }
 
 @Composable
-private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHistory: () -> Unit) {
+private fun CameraContent(onImage: (String, Boolean) -> Unit, onGallery: () -> Unit, onHistory: () -> Unit) {
   val context = LocalContext.current
   val lifecycleOwner = LocalLifecycleOwner.current
   // FIT_CENTER shows the whole captured frame so the crop overlay lines up with it.
@@ -119,6 +123,25 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
   var useBack by remember { mutableStateOf(true) }
   var capturing by remember { mutableStateOf(false) }
   var error by remember { mutableStateOf<String?>(null) }
+  var drawingMode by remember { mutableStateOf(false) }
+
+  // ML Kit's scanner detects the sheet, lets the user adjust the corners and returns a flattened, contrast-enhanced image.
+  val scanLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+    GmsDocumentScanningResult.fromActivityResultIntent(result.data)
+      ?.pages?.firstOrNull()?.imageUri?.let { onImage(it.toString(), true) }
+  }
+  val scan = {
+    val activity = context as Activity
+    val options = GmsDocumentScannerOptions.Builder()
+      .setGalleryImportAllowed(true)
+      .setPageLimit(1)
+      .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
+      .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+      .build()
+    GmsDocumentScanning.getClient(options).getStartScanIntent(activity)
+      .addOnSuccessListener { scanLauncher.launch(IntentSenderRequest.Builder(it).build()) }
+      .addOnFailureListener { error = context.getString(R.string.camera_scan_failed, it.message) }
+  }
 
   LaunchedEffect(useBack) {
     val provider = ProcessCameraProvider.getInstance(context).get()
@@ -180,11 +203,16 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
         .padding(8.dp)
         .background(if (capturing) Color.Gray else Color.White, CircleShape)
         .clickable(enabled = !capturing) {
+          if (drawingMode) {
+            error = null
+            scan()
+            return@clickable
+          }
           capturing = true
           takePicture(
             context,
             imageCapture,
-            onImage = { capturing = false; onImage(it) },
+            onImage = { capturing = false; onImage(it, false) },
             onError = { capturing = false; error = context.getString(R.string.camera_capture_failed, it) },
           )
         },
@@ -193,12 +221,20 @@ private fun CameraContent(onImage: (String) -> Unit, onGallery: () -> Unit, onHi
 
   Box(modifier = Modifier.fillMaxSize()) {
     AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
-    CropOverlay(heldLandscape = heldLandscape, modifier = Modifier.fillMaxSize())
+    if (!drawingMode) CropOverlay(heldLandscape = heldLandscape, modifier = Modifier.fillMaxSize())
 
     run {
       Row(modifier = Modifier.statusBarsPadding().fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) { flip() }
       Column(modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 24.dp)) {
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.Center) {
+          TextButton(onClick = { drawingMode = false }) {
+            Text(stringResource(R.string.camera_mode_photo), color = if (drawingMode) Color.LightGray else Color.Yellow)
+          }
+          TextButton(onClick = { drawingMode = true }) {
+            Text(stringResource(R.string.camera_mode_drawing), color = if (drawingMode) Color.Yellow else Color.LightGray)
+          }
+        }
         Row(
           modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
           horizontalArrangement = Arrangement.SpaceBetween,
