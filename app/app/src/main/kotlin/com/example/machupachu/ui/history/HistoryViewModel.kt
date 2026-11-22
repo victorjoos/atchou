@@ -30,6 +30,8 @@ class HistoryViewModel(app: Application) : AndroidViewModel(app) {
 
   fun url(path: String) = machu.api.url(path)
 
+  fun authHeader() = machu.api.authHeader()
+
   fun refresh() {
     viewModelScope.launch {
       _state.update { it.copy(loading = true, error = null) }

@@ -92,6 +92,11 @@ dependencies {
   // Drawing mode: sheet detection and perspective correction
   implementation(libs.play.services.mlkit.document.scanner)
 
+  // Google Sign-In
+  implementation(libs.androidx.credentials)
+  implementation(libs.androidx.credentials.play.services.auth)
+  implementation(libs.googleid)
+
   // Navigation
   implementation(libs.androidx.navigation3.ui)
   implementation(libs.androidx.navigation3.runtime)

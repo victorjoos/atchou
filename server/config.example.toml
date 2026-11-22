@@ -1,0 +1,19 @@
+# Copy to <data dir>/config.toml (or point MACHU_CONFIG at it). Environment variables (MACHU_*) override these values.
+timezone = "Europe/Brussels"
+children = ["Emma", "Luca"]  # author suggestions in the app
+
+[auth]
+# Google OAuth *web* client ID. Leave empty to disable auth (local dev only!).
+google_client_id = ""
+allowed_emails = ["parent1@gmail.com", "parent2@gmail.com"]
+session_days = 30
+
+[schedule]
+slots = ["06:00", "15:00"]  # quiet-day rotation
+window_start = "06:00"      # nothing changes outside this window
+window_end = "22:00"
+busy_interval_min = 60
+min_wake_min = 15
+max_wake_min = 1440
+decay_half_life_days = 365  # rotation weight halves every N days of age
+pin_boost = 3

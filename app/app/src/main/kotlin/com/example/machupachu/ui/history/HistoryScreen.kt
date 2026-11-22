@@ -1,6 +1,10 @@
 package com.example.machupachu.ui.history
 
 import com.example.machupachu.R
+import androidx.compose.ui.platform.LocalContext
+import coil3.network.NetworkHeaders
+import coil3.network.httpHeaders
+import coil3.request.ImageRequest
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -73,7 +77,7 @@ fun HistoryScreen(onNewPost: () -> Unit, viewModel: HistoryViewModel = appViewMo
           modifier = Modifier.fillMaxSize(),
         ) {
           items(state.posts, key = { it.id }) { post ->
-            PostCard(post, viewModel.url(post.imageUrl), onDelete = { toDelete = post })
+            PostCard(post, viewModel.url(post.imageUrl), viewModel.authHeader(), onDelete = { toDelete = post })
           }
         }
       }
@@ -107,10 +111,12 @@ fun HistoryScreen(onNewPost: () -> Unit, viewModel: HistoryViewModel = appViewMo
 }
 
 @Composable
-private fun PostCard(post: Post, imageUrl: String, onDelete: () -> Unit) {
+private fun PostCard(post: Post, imageUrl: String, authHeader: String?, onDelete: () -> Unit) {
   Card(modifier = Modifier.fillMaxWidth()) {
     AsyncImage(
-      model = imageUrl,
+      model = ImageRequest.Builder(LocalContext.current).data(imageUrl).apply {
+        authHeader?.let { httpHeaders(NetworkHeaders.Builder().add("Authorization", it).build()) }
+      }.build(),
       contentDescription = stringResource(R.string.history_post_by, post.author),
       contentScale = ContentScale.Crop,
       modifier = Modifier.fillMaxWidth().aspectRatio(5f / 3f),
@@ -121,7 +127,10 @@ private fun PostCard(post: Post, imageUrl: String, onDelete: () -> Unit) {
     ) {
       Column(modifier = Modifier.weight(1f)) {
         Text(post.author.ifBlank { stringResource(R.string.history_no_author) }, style = MaterialTheme.typography.titleSmall)
-        Text(post.createdAt.take(10), style = MaterialTheme.typography.bodySmall)
+        Text(
+          listOfNotNull(post.createdAt.take(10), post.sender.takeIf { it.isNotBlank() }?.let { stringResource(R.string.history_sent_by, it) }).joinToString(" · "),
+          style = MaterialTheme.typography.bodySmall,
+        )
       }
       TextButton(onClick = onDelete) { Text(stringResource(R.string.history_delete)) }
     }

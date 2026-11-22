@@ -5,16 +5,13 @@ import random
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
 from PIL import UnidentifiedImageError
 from pydantic import BaseModel
 
-from . import db, frame, imaging
+from . import auth, db, frame, imaging
 from .config import Config
-
-DEFAULT_KIDS = ""  # comma-separated names pre-filled as author suggestions
-
 
 class PostUpdate(BaseModel):
     author: str | None = None
@@ -53,14 +50,17 @@ def _load(upload_bytes: bytes):
         raise HTTPException(400, "image invalide")
 
 
-def create_app(data_dir: Path | None = None, config: Config | None = None, now_fn=None, rng=None) -> FastAPI:
+def create_app(data_dir: Path | None = None, config: Config | None = None, now_fn=None, rng=None, google_verifier=None) -> FastAPI:
     data_dir = Path(data_dir or os.environ.get("MACHU_DATA_DIR", "data"))
     (data_dir / "posts").mkdir(parents=True, exist_ok=True)
     conn = db.connect(data_dir / "machu.sqlite")
-    kids = [k.strip() for k in os.environ.get("MACHU_KID_NAMES", DEFAULT_KIDS).split(",") if k.strip()]
+    cfg = config or Config.load(Path(os.environ.get("MACHU_CONFIG", data_dir / "config.toml")))
+    kids = list(cfg.children)
     app = FastAPI(title="Machu Pachu")
+    auth_router, require_user = auth.make_auth(cfg, data_dir, google_verifier or auth.verify_google_token)
+    app.include_router(auth_router)
     app.include_router(frame.make_router(
-        conn, data_dir, config or Config.from_env(),
+        conn, data_dir, cfg,
         now_fn or (lambda: datetime.now(timezone.utc)), rng or random.Random(),
     ))
 
@@ -81,7 +81,7 @@ def create_app(data_dir: Path | None = None, config: Config | None = None, now_f
             raise HTTPException(404, "publication introuvable")
         return row
 
-    @app.post("/preview")
+    @app.post("/preview", dependencies=[Depends(require_user)])
     async def preview(
         image: UploadFile = File(...),
         crop: str | None = Form(None),
@@ -96,7 +96,7 @@ def create_app(data_dir: Path | None = None, config: Config | None = None, now_f
         out = imaging.render(_load(await image.read()), params)
         return Response(imaging.to_png(out), media_type="image/png")
 
-    @app.post("/posts", status_code=201)
+    @app.post("/posts", status_code=201, dependencies=[Depends(require_user)])
     async def create_post(
         image: UploadFile = File(...),
         author: str = Form(""),
@@ -110,7 +110,11 @@ def create_app(data_dir: Path | None = None, config: Config | None = None, now_f
         contrast: float = Form(1.0),
         show_author: bool = Form(False),
         mode: str = Form("dither"),
+        user=Depends(require_user),
     ):
+        # The sender is the signed-in account (history metadata); `author` is the child who made it.
+        if user:
+            sender = user["name"]
         if show_on:
             try:
                 date.fromisoformat(show_on)
@@ -141,21 +145,21 @@ def create_app(data_dir: Path | None = None, config: Config | None = None, now_f
         (d / "panel.bin").write_bytes(imaging.to_panel_buffer(rendered))
         return row_to_dict(get_row(post_id))
 
-    @app.get("/posts")
+    @app.get("/posts", dependencies=[Depends(require_user)])
     def list_posts():
         rows = conn.execute("SELECT * FROM posts ORDER BY id DESC").fetchall()
         return [row_to_dict(r) for r in rows]
 
-    @app.get("/posts/{post_id}")
+    @app.get("/posts/{post_id}", dependencies=[Depends(require_user)])
     def get_post(post_id: int):
         return row_to_dict(get_row(post_id))
 
-    @app.get("/posts/{post_id}/image")
+    @app.get("/posts/{post_id}/image", dependencies=[Depends(require_user)])
     def get_image(post_id: int):
         get_row(post_id)
         return FileResponse(post_dir(post_id) / "rendered.png", media_type="image/png")
 
-    @app.patch("/posts/{post_id}")
+    @app.patch("/posts/{post_id}", dependencies=[Depends(require_user)])
     def update_post(post_id: int, body: PostUpdate):
         get_row(post_id)
         fields = body.model_dump(exclude_unset=True)
@@ -170,7 +174,7 @@ def create_app(data_dir: Path | None = None, config: Config | None = None, now_f
             conn.commit()
         return row_to_dict(get_row(post_id))
 
-    @app.delete("/posts/{post_id}", status_code=204)
+    @app.delete("/posts/{post_id}", status_code=204, dependencies=[Depends(require_user)])
     def delete_post(post_id: int):
         get_row(post_id)
         conn.execute("DELETE FROM posts WHERE id = ?", (post_id,))
@@ -180,7 +184,7 @@ def create_app(data_dir: Path | None = None, config: Config | None = None, now_f
             f.unlink()
         d.rmdir()
 
-    @app.get("/authors")
+    @app.get("/authors", dependencies=[Depends(require_user)])
     def authors():
         used = [r["name"] for r in conn.execute("SELECT name FROM authors ORDER BY last_used DESC")]
         return kids + [a for a in used if a not in kids]

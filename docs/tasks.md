@@ -42,8 +42,9 @@ deployment, firmware.
 10. ✅ **Frame simulator script** that polls like the firmware would.
 
 ## Phase 3 – Hardening and deployment
-11. **Auth**: Google ID-token verification, email allowlist in config,
-    Google Sign-In in the app.
+11. ✅ (needs a Google client ID to try on a device) **Auth**: Google ID-token verification, email allowlist in config,
+    Google Sign-In in the app. TOML config file (`config.example.toml`); the app is
+    signed in with Google and the server issues its own session token.
 12. **Deployment**: Docker, Caddy config, backups, HTTPS.
 13. **Palette tuning** against the physical panel; optional dithering for drawings.
 

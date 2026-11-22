@@ -1,8 +1,10 @@
 """Scheduling settings, all overridable through environment variables."""
 
 import os
+import tomllib
 from dataclasses import dataclass
 from datetime import time
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 
@@ -11,8 +13,18 @@ def _time(value: str) -> time:
     return time(int(h), int(m or 0))
 
 
+def _csv(value: str) -> tuple[str, ...]:
+    return tuple(v.strip() for v in value.split(",") if v.strip())
+
+
 @dataclass(frozen=True)
 class Config:
+    # Author suggestions (the children's names).
+    children: tuple[str, ...] = ()
+    # Google Sign-In is enforced only when a client ID is set (leave empty for local dev).
+    google_client_id: str = ""
+    allowed_emails: tuple[str, ...] = ()
+    session_days: int = 30
     timezone: str = "Europe/Brussels"
     # Quiet-day rotation slots (local time).
     slots: tuple[time, ...] = (time(6, 0), time(15, 0))
@@ -32,17 +44,37 @@ class Config:
     def tz(self) -> ZoneInfo:
         return ZoneInfo(self.timezone)
 
+    @property
+    def auth_enabled(self) -> bool:
+        return bool(self.google_client_id)
+
     @classmethod
-    def from_env(cls, env=os.environ) -> "Config":
+    def load(cls, path: Path | None = None, env=os.environ) -> "Config":
+        """Read config.toml (if present), then let MACHU_* environment variables override it."""
+        raw: dict = {}
+        if path is not None and path.is_file():
+            raw = tomllib.loads(path.read_text(encoding="utf-8"))
+        auth, sched = raw.get("auth", {}), raw.get("schedule", {})
         d = cls()
+
+        def pick(env_key, toml_value, default):
+            return env[env_key] if env.get(env_key) else (default if toml_value is None else toml_value)
+
+        slots = pick("MACHU_SLOTS", sched.get("slots"), None)
+        if isinstance(slots, str):
+            slots = slots.split(",")
         return cls(
-            timezone=env.get("MACHU_TIMEZONE", d.timezone),
-            slots=tuple(_time(s) for s in env["MACHU_SLOTS"].split(",")) if env.get("MACHU_SLOTS") else d.slots,
-            window_start=_time(env["MACHU_WINDOW_START"]) if env.get("MACHU_WINDOW_START") else d.window_start,
-            window_end=_time(env["MACHU_WINDOW_END"]) if env.get("MACHU_WINDOW_END") else d.window_end,
-            busy_interval_min=int(env.get("MACHU_BUSY_INTERVAL_MIN", d.busy_interval_min)),
-            min_wake_min=int(env.get("MACHU_MIN_WAKE_MIN", d.min_wake_min)),
-            max_wake_min=int(env.get("MACHU_MAX_WAKE_MIN", d.max_wake_min)),
-            decay_half_life_days=float(env.get("MACHU_DECAY_HALF_LIFE_DAYS", d.decay_half_life_days)),
-            pin_boost=float(env.get("MACHU_PIN_BOOST", d.pin_boost)),
+            children=_csv(env["MACHU_KID_NAMES"]) if env.get("MACHU_KID_NAMES") else tuple(raw.get("children", d.children)),
+            google_client_id=pick("MACHU_GOOGLE_CLIENT_ID", auth.get("google_client_id"), d.google_client_id),
+            allowed_emails=tuple(e.strip().lower() for e in (_csv(env["MACHU_ALLOWED_EMAILS"]) if env.get("MACHU_ALLOWED_EMAILS") else auth.get("allowed_emails", d.allowed_emails))),
+            session_days=int(auth.get("session_days", d.session_days)),
+            timezone=pick("MACHU_TIMEZONE", raw.get("timezone"), d.timezone),
+            slots=tuple(_time(t) for t in slots) if slots else d.slots,
+            window_start=_time(pick("MACHU_WINDOW_START", sched.get("window_start"), "06:00")),
+            window_end=_time(pick("MACHU_WINDOW_END", sched.get("window_end"), "22:00")),
+            busy_interval_min=int(pick("MACHU_BUSY_INTERVAL_MIN", sched.get("busy_interval_min"), d.busy_interval_min)),
+            min_wake_min=int(pick("MACHU_MIN_WAKE_MIN", sched.get("min_wake_min"), d.min_wake_min)),
+            max_wake_min=int(pick("MACHU_MAX_WAKE_MIN", sched.get("max_wake_min"), d.max_wake_min)),
+            decay_half_life_days=float(pick("MACHU_DECAY_HALF_LIFE_DAYS", sched.get("decay_half_life_days"), d.decay_half_life_days)),
+            pin_boost=float(pick("MACHU_PIN_BOOST", sched.get("pin_boost"), d.pin_boost)),
         )

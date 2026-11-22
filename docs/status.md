@@ -12,12 +12,14 @@ _Last updated: 2026-11-20_
 - API: preview, create, list, get, image, patch, delete, authors.
 - Writes a packed `panel.bin` for the frame.
 - Scheduler (day queue newest-first with carry-over, weighted rotation pool with configurable decay, pin boost, 06:00–22:00 window) and frame API (`/frame/image`, per-device tokens in DB, ETag, battery, `X-Next-Wake-At`); `scripts/frame_sim.py` simulator. See `server/README.md`.
-- 9 passing tests.
+- Auth: Google ID-token login, own signed session token, email allowlist; `config.toml` (children, allowlist, schedule). Open when no client ID is set. Setup steps in `server/README.md`.
+- 12 passing tests.
 
 **Android app** (`app/`, Kotlin + Compose)
 - Opens on the camera, with a dimmed overlay showing what gets cropped.
 - Camera screen is portrait-locked; labels and crop box rotate with the phone.
 - Gallery picker as a secondary option.
+- Google Sign-In (Credential Manager) gate and session-token handling; history shows the sender. Not yet tried against real Google (needs a client ID); open servers still work.
 - Photo/Dessin toggle: Dessin launches the ML Kit Document Scanner (auto-detect, manual corners, flatten); result goes to the send screen with dithering off and the server's `drawing` mode (exact palette, paper levelled to white). Verified in the emulator (before the `drawing` mode was added).
 - Send screen: server-rendered preview, author chips + free text, author-overlay and dither toggles.
 - History screen: grid, delete, pull-to-refresh, server-URL setting.
@@ -25,12 +27,11 @@ _Last updated: 2026-11-20_
 
 ## Next
 
-1. **11. Google login** with an email allowlist (protects app endpoints; frame endpoints use device tokens only).
-2. **6. Editor:** adjustable crop, rotate, brightness/contrast, show-on date, pin, exclude from rotation (needs PATCH in the app's API client and history controls).
-3. **7. Paint/text canvas** limited to the 6 colors.
-4. **12. Deployment:** Docker + Caddy on a VPS.
-5. **13. Palette tuning** against the real panel.
-6. **14. ESP32-S3 firmware.**
+1. **6. Editor:** adjustable crop, rotate, brightness/contrast, show-on date, pin, exclude from rotation (needs PATCH in the app's API client and history controls).
+2. **7. Paint/text canvas** limited to the 6 colors.
+3. **12. Deployment:** Docker + Caddy on a VPS.
+4. **13. Palette tuning** against the real panel.
+5. **14. ESP32-S3 firmware.**
 
 ## Open decisions
 - Tune `MACHU_DECAY_HALF_LIFE_DAYS` (default 365) once the app is in use.

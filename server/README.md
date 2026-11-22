@@ -6,8 +6,29 @@ MACHU_KID_NAMES="Emma,Luca" uv run uvicorn machu_pachu_server.app:create_app --f
 uv run pytest
 ```
 
-Env: `MACHU_DATA_DIR` (default `./data`), `MACHU_KID_NAMES` (comma-separated author suggestions).
-No auth yet (MVP). API docs at `/docs`.
+Env: `MACHU_DATA_DIR` (default `./data`), `MACHU_CONFIG` (default `<data dir>/config.toml`). API docs at `/docs`.
+
+## Configuration
+
+Copy `config.example.toml` to `<data dir>/config.toml`: children's names (author suggestions), Google client ID,
+email allowlist and scheduling options. `MACHU_*` env vars (e.g. `MACHU_KID_NAMES`, `MACHU_ALLOWED_EMAILS`,
+`MACHU_GOOGLE_CLIENT_ID`) override the file.
+
+## Auth
+
+Auth is enforced only when `google_client_id` is set; without it everything is open (local dev). The app signs in
+with Google, sends the ID token to `POST /auth/google`, and gets back our own signed session token
+(`session_days`, default 30; secret in `<data dir>/session_secret`) that it sends as `Authorization: Bearer`.
+Only emails in `allowed_emails` are admitted; removing one locks that account out immediately. The post's `sender`
+is the signed-in account's name; `author` is the child who made the picture. `/frame/*` uses device tokens only.
+
+Creating the Google client ID (Google Cloud Console, one project):
+1. APIs & Services > OAuth consent screen: type External, add the family emails as test users.
+2. Credentials > Create credentials > OAuth client ID > **Web application**: its client ID is `google_client_id`
+   (the app fetches it from `/auth/config`).
+3. Create a second client ID of type **Android**: package `com.example.machupachu` and the SHA-1 of the signing key
+   (debug: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`;
+   add the release key's SHA-1 later). Nothing from this one goes in the code.
 
 ## Frame API and scheduling
 
