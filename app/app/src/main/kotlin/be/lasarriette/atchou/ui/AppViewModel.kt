@@ -1,4 +1,4 @@
-package com.example.machupachu.ui
+package be.lasarriette.atchou.ui
 
 import android.app.Application
 import androidx.compose.runtime.Composable

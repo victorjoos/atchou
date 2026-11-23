@@ -1,4 +1,4 @@
-package com.example.machupachu
+package be.lasarriette.atchou
 
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable

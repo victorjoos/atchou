@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from machu_pachu_server.imaging import HEIGHT, PALETTE, WIDTH
+from atchou_server.imaging import HEIGHT, PALETTE, WIDTH
 
 FALLBACK_SLEEP_S = 6 * 3600  # what the firmware does when the request fails
 

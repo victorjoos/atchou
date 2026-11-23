@@ -3,9 +3,9 @@ import io
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from machu_pachu_server import auth
-from machu_pachu_server.app import create_app
-from machu_pachu_server.config import Config
+from atchou_server import auth
+from atchou_server.app import create_app
+from atchou_server.config import Config
 
 CLAIMS = {"alice-token": {"email": "Alice@Example.com", "email_verified": True, "name": "Alice"},
           "bob-token": {"email": "bob@example.com", "email_verified": True, "name": "Bob"},

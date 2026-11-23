@@ -1,6 +1,6 @@
-package com.example.machupachu.ui.camera
+package be.lasarriette.atchou.ui.camera
 
-import com.example.machupachu.R
+import be.lasarriette.atchou.R
 import androidx.compose.ui.res.stringResource
 import android.Manifest
 import android.content.Context

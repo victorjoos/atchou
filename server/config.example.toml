@@ -1,4 +1,4 @@
-# Copy to <data dir>/config.toml (or point MACHU_CONFIG at it). Environment variables (MACHU_*) override these values.
+# Copy to <data dir>/config.toml (or point ATCHOU_CONFIG at it). Environment variables (ATCHOU_*) override these values.
 timezone = "Europe/Brussels"
 children = ["Emma", "Luca"]  # author suggestions in the app
 

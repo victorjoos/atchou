@@ -4,8 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from machu_pachu_server import imaging
-from machu_pachu_server.app import create_app
+from atchou_server import imaging
+from atchou_server.app import create_app
 
 
 @pytest.fixture

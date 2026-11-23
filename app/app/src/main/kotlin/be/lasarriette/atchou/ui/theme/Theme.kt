@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.machupachu.ui.theme
+package be.lasarriette.atchou.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -41,7 +41,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun MachuPachuTheme(
+fun AtchouTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,

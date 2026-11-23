@@ -1,6 +1,6 @@
-package com.example.machupachu.ui.history
+package be.lasarriette.atchou.ui.history
 
-import com.example.machupachu.R
+import be.lasarriette.atchou.R
 import androidx.compose.ui.platform.LocalContext
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
@@ -38,9 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.machupachu.ui.appViewModel
+import be.lasarriette.atchou.ui.appViewModel
 import coil3.compose.AsyncImage
-import com.example.machupachu.data.Post
+import be.lasarriette.atchou.data.Post
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +54,7 @@ fun HistoryScreen(onNewPost: () -> Unit, viewModel: HistoryViewModel = appViewMo
   Scaffold(
     topBar = {
       CenterAlignedTopAppBar(
-        title = { Text("Machu Pachu") },
+        title = { Text(stringResource(R.string.app_name)) },
         actions = { TextButton(onClick = { showSettings = true }) { Text(stringResource(R.string.history_server)) } },
       )
     },

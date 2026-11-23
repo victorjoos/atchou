@@ -34,11 +34,11 @@ _Last updated: 2026-11-20_
 5. **14. ESP32-S3 firmware.**
 
 ## Open decisions
-- Tune `MACHU_DECAY_HALF_LIFE_DAYS` (default 365) once the app is in use.
+- Tune `ATCHOU_DECAY_HALF_LIFE_DAYS` (default 365) once the app is in use.
 - Upload size limit.
 - Verify the panel's native color codes (currently from memory: black 0, white 1, yellow 2, red 3, blue 5, green 6).
 
 ## Dev notes
-- Server: `cd server && MACHU_KID_NAMES="Emma,Luca" uv run uvicorn machu_pachu_server.app:create_app --factory --host 0.0.0.0 --port 8000`
+- Server: `cd server && ATCHOU_KID_NAMES="Emma,Luca" uv run uvicorn atchou_server.app:create_app --factory --host 0.0.0.0 --port 8000`
 - App build: `cd app && ./gradlew --no-daemon -q assembleDebug`
 - Emulator reaches the host server at `http://10.0.2.2:8000` (default in the app).

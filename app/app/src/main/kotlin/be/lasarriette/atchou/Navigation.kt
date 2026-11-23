@@ -1,4 +1,4 @@
-package com.example.machupachu
+package be.lasarriette.atchou
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -6,9 +6,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.example.machupachu.ui.camera.CameraScreen
-import com.example.machupachu.ui.history.HistoryScreen
-import com.example.machupachu.ui.send.SendScreen
+import be.lasarriette.atchou.ui.camera.CameraScreen
+import be.lasarriette.atchou.ui.history.HistoryScreen
+import be.lasarriette.atchou.ui.send.SendScreen
 
 @Composable
 fun MainNavigation() {

@@ -1,6 +1,6 @@
-package com.example.machupachu.ui.send
+package be.lasarriette.atchou.ui.send
 
-import com.example.machupachu.R
+import be.lasarriette.atchou.R
 import androidx.compose.ui.res.stringResource
 import android.graphics.BitmapFactory
 import androidx.core.net.toUri
@@ -36,7 +36,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.machupachu.ui.appViewModel
+import be.lasarriette.atchou.ui.appViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

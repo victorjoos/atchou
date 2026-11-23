@@ -51,12 +51,12 @@ def _load(upload_bytes: bytes):
 
 
 def create_app(data_dir: Path | None = None, config: Config | None = None, now_fn=None, rng=None, google_verifier=None) -> FastAPI:
-    data_dir = Path(data_dir or os.environ.get("MACHU_DATA_DIR", "data"))
+    data_dir = Path(data_dir or os.environ.get("ATCHOU_DATA_DIR", "data"))
     (data_dir / "posts").mkdir(parents=True, exist_ok=True)
-    conn = db.connect(data_dir / "machu.sqlite")
-    cfg = config or Config.load(Path(os.environ.get("MACHU_CONFIG", data_dir / "config.toml")))
+    conn = db.connect(data_dir / "atchou.sqlite")
+    cfg = config or Config.load(Path(os.environ.get("ATCHOU_CONFIG", data_dir / "config.toml")))
     kids = list(cfg.children)
-    app = FastAPI(title="Machu Pachu")
+    app = FastAPI(title="Atchou")
     auth_router, require_user = auth.make_auth(cfg, data_dir, google_verifier or auth.verify_google_token)
     app.include_router(auth_router)
     app.include_router(frame.make_router(

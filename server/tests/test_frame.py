@@ -6,9 +6,9 @@ from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from machu_pachu_server import db, frame, scheduler
-from machu_pachu_server.app import create_app
-from machu_pachu_server.config import Config
+from atchou_server import db, frame, scheduler
+from atchou_server.app import create_app
+from atchou_server.config import Config
 
 CFG = Config()
 BRU = ZoneInfo("Europe/Brussels")
@@ -63,7 +63,7 @@ def make_client(tmp_path):
     clock = {"now": local(2026, 12, 3, 10)}
     app = create_app(tmp_path, now_fn=lambda: clock["now"], rng=random.Random(1))
     client = TestClient(app)
-    token = frame.add_device(db.connect(tmp_path / "machu.sqlite"), "salon")
+    token = frame.add_device(db.connect(tmp_path / "atchou.sqlite"), "salon")
     client.headers["Authorization"] = f"Bearer {token}"
     return client, clock
 

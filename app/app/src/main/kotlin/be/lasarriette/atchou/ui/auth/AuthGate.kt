@@ -1,4 +1,4 @@
-package com.example.machupachu.ui.auth
+package be.lasarriette.atchou.ui.auth
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -24,9 +24,9 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.machupachu.MachuApp
-import com.example.machupachu.R
-import com.example.machupachu.data.LoginRejectedException
+import be.lasarriette.atchou.AtchouApp
+import be.lasarriette.atchou.R
+import be.lasarriette.atchou.data.LoginRejectedException
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
@@ -35,19 +35,19 @@ import kotlinx.coroutines.launch
 @Composable
 fun AuthGate(content: @Composable () -> Unit) {
   val context = LocalContext.current
-  val machu = context.applicationContext as MachuApp
-  val loginRequired by machu.loginRequired.collectAsStateWithLifecycle()
+  val atchou = context.applicationContext as AtchouApp
+  val loginRequired by atchou.loginRequired.collectAsStateWithLifecycle()
 
   // A server without auth never answers 401, so ask up front; ignore failures (the screens report them).
   LaunchedEffect(Unit) {
-    runCatching { machu.api.authConfig() }.onSuccess { if (it.authRequired && machu.settings.sessionToken == null) machu.requireLogin() }
+    runCatching { atchou.api.authConfig() }.onSuccess { if (it.authRequired && atchou.settings.sessionToken == null) atchou.requireLogin() }
   }
 
-  if (loginRequired) SignInScreen(machu) else content()
+  if (loginRequired) SignInScreen(atchou) else content()
 }
 
 @Composable
-private fun SignInScreen(machu: MachuApp) {
+private fun SignInScreen(atchou: AtchouApp) {
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
   var error by remember { mutableStateOf<String?>(null) }
@@ -58,7 +58,7 @@ private fun SignInScreen(machu: MachuApp) {
       busy = true
       error = null
       try {
-        val clientId = machu.api.authConfig().googleClientId
+        val clientId = atchou.api.authConfig().googleClientId
         if (clientId == null) {
           error = context.getString(R.string.auth_not_configured)
           return@launch
@@ -67,7 +67,7 @@ private fun SignInScreen(machu: MachuApp) {
         val credential = CredentialManager.create(context).getCredential(context as Activity, request).credential
         if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
           val idToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
-          machu.loginDone(machu.api.loginGoogle(idToken).token)
+          atchou.loginDone(atchou.api.loginGoogle(idToken).token)
         }
       } catch (e: LoginRejectedException) {
         error = context.getString(R.string.auth_not_allowed)

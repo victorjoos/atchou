@@ -516,7 +516,7 @@ wheels = [
 ]
 
 [[package]]
-name = "machu-pachu-server"
+name = "atchou-server"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

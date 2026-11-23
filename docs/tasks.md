@@ -1,4 +1,4 @@
-# Machu Pachu – Tasks
+# Atchou – Tasks
 
 Order: MVP server + app first (no auth, no frame), then scheduling, auth,
 deployment, firmware.

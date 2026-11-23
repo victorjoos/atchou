@@ -5,10 +5,10 @@ plugins {
 }
 
 android {
-  namespace = "com.example.machupachu"
+  namespace = "be.lasarriette.atchou"
   compileSdk { version = release(37) }
   defaultConfig {
-    applicationId = "com.example.machupachu"
+    applicationId = "be.lasarriette.atchou"
     minSdk = 28
     targetSdk = 37
     versionCode = 1

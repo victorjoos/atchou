@@ -1,10 +1,10 @@
-package com.example.machupachu.ui.history
+package be.lasarriette.atchou.ui.history
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.machupachu.MachuApp
-import com.example.machupachu.data.Post
+import be.lasarriette.atchou.AtchouApp
+import be.lasarriette.atchou.data.Post
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -17,26 +17,26 @@ data class HistoryState(
 )
 
 class HistoryViewModel(app: Application) : AndroidViewModel(app) {
-  private val machu = app as MachuApp
+  private val atchou = app as AtchouApp
   private val _state = MutableStateFlow(HistoryState())
   val state: StateFlow<HistoryState> = _state
 
   var serverUrl: String
-    get() = machu.settings.serverUrl
+    get() = atchou.settings.serverUrl
     set(value) {
-      machu.settings.serverUrl = value
+      atchou.settings.serverUrl = value
       refresh()
     }
 
-  fun url(path: String) = machu.api.url(path)
+  fun url(path: String) = atchou.api.url(path)
 
-  fun authHeader() = machu.api.authHeader()
+  fun authHeader() = atchou.api.authHeader()
 
   fun refresh() {
     viewModelScope.launch {
       _state.update { it.copy(loading = true, error = null) }
       try {
-        val posts = machu.api.listPosts()
+        val posts = atchou.api.listPosts()
         _state.update { it.copy(posts = posts, loading = false) }
       } catch (e: Exception) {
         _state.update { it.copy(loading = false, error = e.message ?: e.javaClass.simpleName) }
@@ -47,7 +47,7 @@ class HistoryViewModel(app: Application) : AndroidViewModel(app) {
   fun delete(post: Post) {
     viewModelScope.launch {
       try {
-        machu.api.deletePost(post.id)
+        atchou.api.deletePost(post.id)
         refresh()
       } catch (e: Exception) {
         _state.update { it.copy(error = e.message ?: e.javaClass.simpleName) }

@@ -6,7 +6,7 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
-        android:name=".MachuApp"
+        android:name=".AtchouApp"
         android:allowBackup="true"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher"
@@ -14,7 +14,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:windowSoftInputMode="adjustResize"
-        android:theme="@style/Theme.MachuPachu">
+        android:theme="@style/Theme.Atchou">
         <activity
             android:name=".MainActivity"
             android:exported="true">

@@ -1,12 +1,12 @@
-package com.example.machupachu
+package be.lasarriette.atchou
 
 import android.app.Application
-import com.example.machupachu.data.ApiClient
-import com.example.machupachu.data.Settings
+import be.lasarriette.atchou.data.ApiClient
+import be.lasarriette.atchou.data.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class MachuApp : Application() {
+class AtchouApp : Application() {
   lateinit var settings: Settings
   lateinit var api: ApiClient
 

@@ -1,4 +1,4 @@
-# Machu Pachu – Functional Requirements
+# Atchou – Functional Requirements
 
 A family app to send drawings, photos and text to a 7" Waveshare PhotoPainter
 (ESP32-S3, 800×480, 6-color e-paper). v1 targets a single frame.

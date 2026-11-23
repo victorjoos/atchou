@@ -50,7 +50,7 @@ class Config:
 
     @classmethod
     def load(cls, path: Path | None = None, env=os.environ) -> "Config":
-        """Read config.toml (if present), then let MACHU_* environment variables override it."""
+        """Read config.toml (if present), then let ATCHOU_* environment variables override it."""
         raw: dict = {}
         if path is not None and path.is_file():
             raw = tomllib.loads(path.read_text(encoding="utf-8"))
@@ -60,21 +60,21 @@ class Config:
         def pick(env_key, toml_value, default):
             return env[env_key] if env.get(env_key) else (default if toml_value is None else toml_value)
 
-        slots = pick("MACHU_SLOTS", sched.get("slots"), None)
+        slots = pick("ATCHOU_SLOTS", sched.get("slots"), None)
         if isinstance(slots, str):
             slots = slots.split(",")
         return cls(
-            children=_csv(env["MACHU_KID_NAMES"]) if env.get("MACHU_KID_NAMES") else tuple(raw.get("children", d.children)),
-            google_client_id=pick("MACHU_GOOGLE_CLIENT_ID", auth.get("google_client_id"), d.google_client_id),
-            allowed_emails=tuple(e.strip().lower() for e in (_csv(env["MACHU_ALLOWED_EMAILS"]) if env.get("MACHU_ALLOWED_EMAILS") else auth.get("allowed_emails", d.allowed_emails))),
+            children=_csv(env["ATCHOU_KID_NAMES"]) if env.get("ATCHOU_KID_NAMES") else tuple(raw.get("children", d.children)),
+            google_client_id=pick("ATCHOU_GOOGLE_CLIENT_ID", auth.get("google_client_id"), d.google_client_id),
+            allowed_emails=tuple(e.strip().lower() for e in (_csv(env["ATCHOU_ALLOWED_EMAILS"]) if env.get("ATCHOU_ALLOWED_EMAILS") else auth.get("allowed_emails", d.allowed_emails))),
             session_days=int(auth.get("session_days", d.session_days)),
-            timezone=pick("MACHU_TIMEZONE", raw.get("timezone"), d.timezone),
+            timezone=pick("ATCHOU_TIMEZONE", raw.get("timezone"), d.timezone),
             slots=tuple(_time(t) for t in slots) if slots else d.slots,
-            window_start=_time(pick("MACHU_WINDOW_START", sched.get("window_start"), "06:00")),
-            window_end=_time(pick("MACHU_WINDOW_END", sched.get("window_end"), "22:00")),
-            busy_interval_min=int(pick("MACHU_BUSY_INTERVAL_MIN", sched.get("busy_interval_min"), d.busy_interval_min)),
-            min_wake_min=int(pick("MACHU_MIN_WAKE_MIN", sched.get("min_wake_min"), d.min_wake_min)),
-            max_wake_min=int(pick("MACHU_MAX_WAKE_MIN", sched.get("max_wake_min"), d.max_wake_min)),
-            decay_half_life_days=float(pick("MACHU_DECAY_HALF_LIFE_DAYS", sched.get("decay_half_life_days"), d.decay_half_life_days)),
-            pin_boost=float(pick("MACHU_PIN_BOOST", sched.get("pin_boost"), d.pin_boost)),
+            window_start=_time(pick("ATCHOU_WINDOW_START", sched.get("window_start"), "06:00")),
+            window_end=_time(pick("ATCHOU_WINDOW_END", sched.get("window_end"), "22:00")),
+            busy_interval_min=int(pick("ATCHOU_BUSY_INTERVAL_MIN", sched.get("busy_interval_min"), d.busy_interval_min)),
+            min_wake_min=int(pick("ATCHOU_MIN_WAKE_MIN", sched.get("min_wake_min"), d.min_wake_min)),
+            max_wake_min=int(pick("ATCHOU_MAX_WAKE_MIN", sched.get("max_wake_min"), d.max_wake_min)),
+            decay_half_life_days=float(pick("ATCHOU_DECAY_HALF_LIFE_DAYS", sched.get("decay_half_life_days"), d.decay_half_life_days)),
+            pin_boost=float(pick("ATCHOU_PIN_BOOST", sched.get("pin_boost"), d.pin_boost)),
         )

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.machupachu.ui.theme
+package be.lasarriette.atchou.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

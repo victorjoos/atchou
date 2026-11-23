@@ -1,4 +1,4 @@
-# Machu Pachu
+# Atchou
 
 Family app + server to send photos, kids' drawings and text to a 7" Waveshare PhotoPainter (ESP32-S3, 800×480, 6-color e-paper).
 
