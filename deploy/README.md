@@ -6,7 +6,7 @@ Daily off-site backups (restic to Backblaze B2).
 ## Prerequisites
 1. A Debian/Ubuntu VPS with an SSH user that has sudo.
 2. A DNS `A` record: `atchou.lasarriette.be` → the VPS IP (before the first run, otherwise certificate issuance fails).
-3. A GitHub token (classic) with `read:packages`, so the VPS can pull the private image.
+3. The `ghcr.io/victorjoos/atchou-server` package set to public (the VPS pulls it without logging in).
 4. A private Backblaze B2 bucket and an application key (the S3 endpoint is shown on the bucket page).
 
 ## Configuration (git-ignored files)
@@ -21,7 +21,7 @@ Keep the restic password somewhere safe: without it the backups are unrecoverabl
 
 ## Build and push the image
 ```sh
-echo $GHCR_TOKEN | docker login ghcr.io -u victorjoos --password-stdin   # token with write:packages
+echo $GHCR_TOKEN | docker login ghcr.io -u victorjoos --password-stdin   # classic token with write:packages
 deploy/build.sh        # tags: short git SHA + latest (PLATFORM=linux/amd64 by default)
 ```
 

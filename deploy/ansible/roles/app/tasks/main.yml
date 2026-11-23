@@ -33,13 +33,6 @@
     mode: "0644"
   notify: Reload caddy
 
-- name: Log in to ghcr.io
-  ansible.builtin.command: docker login ghcr.io -u {{ ghcr_user }} --password-stdin
-  args:
-    stdin: "{{ ghcr_token }}"
-  no_log: true
-  changed_when: false
-
 - name: Pull images
   ansible.builtin.command: docker compose pull
   args:

@@ -4,8 +4,6 @@ acme_email: you@example.com        # Let's Encrypt expiry notices
 
 atchou_image: ghcr.io/victorjoos/atchou-server
 atchou_image_tag: latest           # or the tag printed by deploy/build.sh
-ghcr_user: victorjoos
-ghcr_token: ghp_xxx                # GitHub token with read:packages
 
 ssh_port: 22                       # keep in sync with ansible_port
 
