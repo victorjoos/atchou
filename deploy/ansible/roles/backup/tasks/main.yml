@@ -1,0 +1,50 @@
+- name: Backup configuration (restic repository credentials)
+  ansible.builtin.template:
+    src: restic.env.j2
+    dest: /etc/atchou-backup.env
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Backup script
+  ansible.builtin.template:
+    src: atchou-backup.sh.j2
+    dest: /usr/local/bin/atchou-backup
+    mode: "0750"
+
+- name: Systemd service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/atchou-backup.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Atchou off-site backup (restic)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/atchou-backup
+
+- name: Systemd timer
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/atchou-backup.timer
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Daily Atchou backup
+
+      [Timer]
+      OnCalendar=*-*-* 03:30:00
+      RandomizedDelaySec=15min
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+- name: Timer enabled
+  ansible.builtin.systemd:
+    name: atchou-backup.timer
+    daemon_reload: true
+    enabled: true
+    state: started

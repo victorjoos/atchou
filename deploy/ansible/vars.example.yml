@@ -1,0 +1,17 @@
+# cp vars.example.yml vars.yml and fill in (git-ignored).
+atchou_domain: atchou.lasarriette.be
+acme_email: you@example.com        # Let's Encrypt expiry notices
+
+atchou_image: ghcr.io/victorjoos/atchou-server
+atchou_image_tag: latest           # or the tag printed by deploy/build.sh
+ghcr_user: victorjoos
+ghcr_token: ghp_xxx                # GitHub token with read:packages
+
+ssh_port: 22                       # keep in sync with ansible_port
+
+# Off-site backups: Backblaze B2 through its S3-compatible API.
+backup_s3_endpoint: s3.eu-central-003.backblazeb2.com   # shown on the bucket page
+backup_bucket: atchou-backups
+backup_key_id: xxx
+backup_application_key: xxx
+backup_restic_password: change-me  # encrypts the repository; losing it loses the backups

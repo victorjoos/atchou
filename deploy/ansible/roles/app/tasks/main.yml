@@ -1,0 +1,64 @@
+- name: Application directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+  loop:
+    - { path: /opt/atchou }
+    # Matches the uid/gid of the user inside the image.
+    - { path: /opt/atchou/data, owner: "10001", group: "10001", mode: "0750" }
+
+- name: Server config (copied from deploy/ansible/config.toml)
+  ansible.builtin.copy:
+    src: config.toml
+    dest: /opt/atchou/config.toml
+    owner: root
+    group: "10001"
+    mode: "0640"
+  notify: Restart atchou
+
+- name: Compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/atchou/docker-compose.yml
+    mode: "0644"
+  notify: Restart atchou
+
+- name: Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /opt/atchou/Caddyfile
+    mode: "0644"
+  notify: Reload caddy
+
+- name: Log in to ghcr.io
+  ansible.builtin.command: docker login ghcr.io -u {{ ghcr_user }} --password-stdin
+  args:
+    stdin: "{{ ghcr_token }}"
+  no_log: true
+  changed_when: false
+
+- name: Pull images
+  ansible.builtin.command: docker compose pull
+  args:
+    chdir: /opt/atchou
+  register: pull
+  changed_when: "'Downloaded newer image' in pull.stderr or 'Pulled' in pull.stderr"
+
+- name: Start the stack
+  ansible.builtin.command: docker compose up -d --remove-orphans
+  args:
+    chdir: /opt/atchou
+  register: up
+  changed_when: "'Started' in up.stderr or 'Recreated' in up.stderr or 'Created' in up.stderr"
+
+- name: Wait until the app answers through Caddy (HTTPS certificate issued)
+  ansible.builtin.uri:
+    url: "https://{{ atchou_domain }}/auth/config"
+  register: health
+  retries: 12
+  delay: 5
+  until: health.status == 200
+  # DNS must already point at the VPS, otherwise Caddy cannot get a certificate.

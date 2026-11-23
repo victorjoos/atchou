@@ -14,6 +14,7 @@ _Last updated: 2026-11-20_
 - Scheduler (day queue newest-first with carry-over, weighted rotation pool with configurable decay, pin boost, 06:00–22:00 window) and frame API (`/frame/image`, per-device tokens in DB, ETag, battery, `X-Next-Wake-At`); `scripts/frame_sim.py` simulator. See `server/README.md`.
 - Auth: Google ID-token login, own signed session token, email allowlist; `config.toml` (children, allowlist, schedule). Open when no client ID is set. Setup steps in `server/README.md`.
 - 12 passing tests.
+- Deployment (`deploy/`): `server/Dockerfile`, `deploy/build.sh` (push to ghcr.io), Ansible playbook (base, app with docker-compose + Caddy, restic backup to B2). Syntax-checked only; not yet run on a VPS. See `deploy/README.md`.
 
 **Android app** (`app/`, Kotlin + Compose)
 - Opens on the camera, with a dimmed overlay showing what gets cropped.
@@ -29,7 +30,7 @@ _Last updated: 2026-11-20_
 
 1. **6. Editor:** adjustable crop, rotate, brightness/contrast, show-on date, pin, exclude from rotation (needs PATCH in the app's API client and history controls).
 2. **7. Paint/text canvas** limited to the 6 colors.
-3. **12. Deployment:** Docker + Caddy on a VPS.
+3. **12. Deployment:** first run on the VPS (playbook written, untested).
 4. **13. Palette tuning** against the real panel.
 5. **14. ESP32-S3 firmware.**
 

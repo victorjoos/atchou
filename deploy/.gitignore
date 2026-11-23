@@ -1,0 +1,4 @@
+# Local deployment secrets and host details; never commit.
+ansible/inventory.yml
+ansible/vars.yml
+ansible/config.toml

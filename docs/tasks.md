@@ -45,7 +45,7 @@ deployment, firmware.
 11. ✅ (needs a Google client ID to try on a device) **Auth**: Google ID-token verification, email allowlist in config,
     Google Sign-In in the app. TOML config file (`config.example.toml`); the app is
     signed in with Google and the server issues its own session token.
-12. **Deployment**: Docker, Caddy config, backups, HTTPS.
+12. ✅ (not yet run on a real VPS) **Deployment**: Docker image, docker-compose + Caddy (HTTPS), Ansible playbook, restic backups to Backblaze B2. See `deploy/README.md`.
 13. **Palette tuning** against the physical panel; optional dithering for drawings.
 
 ## Phase 4 – Firmware

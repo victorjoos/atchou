@@ -1,0 +1,33 @@
+services:
+  atchou:
+    image: {{ atchou_image }}:{{ atchou_image_tag }}
+    restart: unless-stopped
+    environment:
+      ATCHOU_DATA_DIR: /data
+      ATCHOU_CONFIG: /config/config.toml
+    volumes:
+      - ./data:/data
+      - ./config.toml:/config/config.toml:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/auth/config')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - atchou
+
+volumes:
+  caddy_data:
+  caddy_config:

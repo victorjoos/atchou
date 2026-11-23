@@ -1,0 +1,8 @@
+{
+	email {{ acme_email }}
+}
+
+{{ atchou_domain }} {
+	encode zstd gzip
+	reverse_proxy atchou:8000
+}

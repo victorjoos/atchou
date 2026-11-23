@@ -1,0 +1,58 @@
+- name: Base packages
+  ansible.builtin.apt:
+    name: [ca-certificates, curl, ufw, unattended-upgrades, sqlite3, restic]
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Docker apt repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: deb
+    uris: "https://download.docker.com/linux/{{ ansible_distribution | lower }}"
+    suites: "{{ ansible_distribution_release }}"
+    components: [stable]
+    signed_by: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+    architectures: "{{ [ansible_architecture | replace('x86_64', 'amd64') | replace('aarch64', 'arm64')] }}"
+    state: present
+
+- name: Docker engine and compose plugin
+  ansible.builtin.apt:
+    name: [docker-ce, docker-ce-cli, containerd.io, docker-compose-plugin]
+    update_cache: true
+
+- name: Docker enabled
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Automatic security updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: "0644"
+
+- name: Firewall defaults
+  community.general.ufw:
+    default: "{{ item.dir }}"
+    direction: "{{ item.direction }}"
+  loop:
+    - { dir: deny, direction: incoming }
+    - { dir: allow, direction: outgoing }
+
+- name: Firewall rules (SSH, HTTP, HTTPS)
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  loop:
+    - { port: "{{ ssh_port }}", proto: tcp }
+    - { port: "80", proto: tcp }
+    - { port: "443", proto: tcp }
+    - { port: "443", proto: udp }
+
+- name: Firewall enabled
+  community.general.ufw:
+    state: enabled

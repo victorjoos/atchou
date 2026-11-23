@@ -1,0 +1,9 @@
+- name: Restart atchou
+  ansible.builtin.command: docker compose up -d --force-recreate atchou
+  args:
+    chdir: /opt/atchou
+
+- name: Reload caddy
+  ansible.builtin.command: docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+  args:
+    chdir: /opt/atchou

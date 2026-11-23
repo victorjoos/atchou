@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Consistent SQLite snapshot + post files + config, pushed to the restic repository.
+set -euo pipefail
+set -a; . /etc/atchou-backup.env; set +a
+
+DATA=/opt/atchou/data
+STAGE=/var/lib/atchou-backup
+mkdir -p "$STAGE"
+sqlite3 "$DATA/atchou.sqlite" ".backup '$STAGE/atchou.sqlite'"
+
+restic cat config >/dev/null 2>&1 || restic init
+restic backup --host atchou --tag atchou \
+  "$STAGE/atchou.sqlite" "$DATA/posts" "$DATA/session_secret" /opt/atchou/config.toml
+restic forget --host atchou --tag atchou --keep-daily 14 --keep-weekly 8 --keep-monthly 12 --prune

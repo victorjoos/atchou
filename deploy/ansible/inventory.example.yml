@@ -1,0 +1,9 @@
+# cp inventory.example.yml inventory.yml  (git-ignored)
+all:
+  children:
+    atchou:
+      hosts:
+        vps:
+          ansible_host: 203.0.113.10
+          ansible_user: victor        # an existing user with sudo
+          # ansible_port: 22
