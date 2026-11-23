@@ -20,9 +20,14 @@ ansible-galaxy collection install -r requirements.yml
 Keep the restic password somewhere safe: without it the backups are unrecoverable.
 
 ## Build and push the image
+GitHub Actions (`.github/workflows/server-image.yml`) runs the server tests, then builds and pushes
+`ghcr.io/victorjoos/atchou-server` on every push to `main` that touches `server/` (tags: short git SHA + `latest`).
+It can also be started manually from the Actions tab. The tag to deploy is shown in the package page.
+
+Manual fallback from a machine with Docker:
 ```sh
 echo $GHCR_TOKEN | docker login ghcr.io -u victorjoos --password-stdin   # classic token with write:packages
-deploy/build.sh        # tags: short git SHA + latest (PLATFORM=linux/amd64 by default)
+deploy/build.sh
 ```
 
 ## Deploy
