@@ -1,0 +1,13 @@
+[project]
+name = "atchou-ansible"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Victor Joos", email = "victorjoosdtb@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "ansible>=14.6.0",
+]
+

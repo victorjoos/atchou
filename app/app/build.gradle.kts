@@ -43,6 +43,12 @@ kotlin {
   jvmToolchain(17)
 }
 
+gradle.taskGraph.whenReady {
+  if (allTasks.any { it.name.contains("Release") } && System.getenv("ATCHOU_KEYSTORE") == null) {
+    throw GradleException("Release builds must be signed: set ATCHOU_KEYSTORE, ATCHOU_KEYSTORE_PASSWORD, ATCHOU_KEY_ALIAS and ATCHOU_KEY_PASSWORD.")
+  }
+}
+
 dependencies {
   val composeBom = platform(libs.androidx.compose.bom)
   implementation(composeBom)

@@ -1,0 +1,46 @@
+# First-time setup on a fresh VPS: creates a sudo user reusing root's authorized SSH keys.
+# Run once as root (-e overrides ansible_user from the inventory):
+#   ansible-playbook bootstrap.yml -e @vars.yml -e ansible_user=root
+- name: Create the admin user
+  hosts: atchou
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: sudo installed
+      ansible.builtin.apt:
+        name: sudo
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Admin user
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        groups: sudo
+        append: true
+        shell: /bin/bash
+        create_home: true
+
+    - name: Passwordless sudo (login is by SSH key only)
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/90-{{ admin_user }}"
+        content: "{{ admin_user }} ALL=(ALL) NOPASSWD:ALL\n"
+        mode: "0440"
+        validate: /usr/sbin/visudo -cf %s
+
+    - name: Home .ssh directory
+      ansible.builtin.file:
+        path: "/home/{{ admin_user }}/.ssh"
+        state: directory
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: "0700"
+
+    - name: Reuse root's authorized SSH keys
+      ansible.builtin.copy:
+        src: /root/.ssh/authorized_keys
+        dest: "/home/{{ admin_user }}/.ssh/authorized_keys"
+        remote_src: true
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: "0600"
+        force: false

@@ -42,4 +42,4 @@ _Last updated: 2026-11-20_
 ## Dev notes
 - Server: `cd server && ATCHOU_KID_NAMES="Emma,Luca" uv run uvicorn atchou_server.app:create_app --factory --host 0.0.0.0 --port 8000`
 - App build: `cd app && ./gradlew --no-daemon -q assembleDebug`
-- Emulator reaches the host server at `http://10.0.2.2:8000` (default in the app).
+- Emulator reaches the host server at `http://10.0.2.2:8000` (set it in the history screen; the app defaults to the production URL).

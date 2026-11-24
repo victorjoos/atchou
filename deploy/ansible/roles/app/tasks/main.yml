@@ -48,8 +48,10 @@
   changed_when: "'Started' in up.stderr or 'Recreated' in up.stderr or 'Created' in up.stderr"
 
 - name: Wait until the app answers through Caddy (HTTPS certificate issued)
+  delegate_to: localhost
   ansible.builtin.uri:
     url: "https://{{ atchou_domain }}/auth/config"
+  become: false
   register: health
   retries: 12
   delay: 5

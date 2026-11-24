@@ -4,7 +4,7 @@ Docker + Caddy (automatic HTTPS) on a Debian/Ubuntu VPS, provisioned with Ansibl
 Daily off-site backups (restic to Backblaze B2).
 
 ## Prerequisites
-1. A Debian/Ubuntu VPS with an SSH user that has sudo.
+1. A Debian/Ubuntu VPS with root SSH access. If it has no sudo user yet, run the bootstrap step below.
 2. A DNS `A` record: `atchou.lasarriette.be` → the VPS IP (before the first run, otherwise certificate issuance fails).
 3. The `ghcr.io/victorjoos/atchou-server` package set to public (the VPS pulls it without logging in).
 4. A private Backblaze B2 bucket and an application key (the S3 endpoint is shown on the bucket page).
@@ -18,6 +18,15 @@ cp ../../server/config.example.toml config.toml   # children, allowed emails, go
 ansible-galaxy collection install -r requirements.yml
 ```
 Keep the restic password somewhere safe: without it the backups are unrecoverable.
+
+## First-time setup (fresh VPS, root only)
+Creates `admin_user` (from `vars.yml`) with sudo, reusing root's `authorized_keys`:
+```sh
+cd deploy/ansible
+ansible-playbook bootstrap.yml -e @vars.yml -e ansible_user=root
+ssh victor@<vps-ip> sudo whoami   # prints "root"
+```
+Then set `ansible_user` in `inventory.yml` to that user and use the deploy step below.
 
 ## Build and push the image
 GitHub Actions (`.github/workflows/server-image.yml`) runs the server tests, then builds and pushes

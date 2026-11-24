@@ -1,4 +1,6 @@
 # cp vars.example.yml vars.yml and fill in (git-ignored).
+admin_user: victor                 # created by bootstrap.yml
+
 atchou_domain: atchou.lasarriette.be
 acme_email: you@example.com        # Let's Encrypt expiry notices
 
