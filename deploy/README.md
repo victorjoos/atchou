@@ -51,6 +51,10 @@ The playbook is idempotent: re-run it to update the image or the config.
 ## After the first deployment
 - Register a frame (the token is shown only once):
   `ssh vps 'cd /opt/atchou && sudo docker compose exec atchou python -m atchou_server.cli add-device living-room'`
+- To keep a test token, save it in `deploy/ansible/test-device.token` (git-ignored) and check the frame path with:
+  `cd server && uv run python scripts/frame_sim.py --token "$(cat ../deploy/ansible/test-device.token)" --url https://atchou.lasarriette.be --once`
+  (`HTTP 204` = no post to show yet, `HTTP 200` = image received). Use a separate token for the real frame.
+  New token: `ssh <user>@<vps> 'cd /opt/atchou && sudo docker compose exec atchou python -m atchou_server.cli add-device <name>'` (shown only once).
 - In the app, set the server URL to `https://atchou.lasarriette.be`.
 - The Google Android client must include the SHA-1 of the release signing key.
 

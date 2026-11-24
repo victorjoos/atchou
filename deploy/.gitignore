@@ -3,3 +3,4 @@ ansible/inventory.yml
 ansible/vars.yml
 ansible/config.toml
 ansible/roles/app/files/config.toml
+ansible/test-device.token
