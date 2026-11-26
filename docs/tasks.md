@@ -50,6 +50,9 @@ deployment, firmware.
 
 ## Phase 4 – Firmware
 14. 🟡 ESP32-S3 firmware: Wi-Fi, poll, download, display, battery, deep sleep. Builds; needs hardware validation (RTC wake, sleep current).
+15. **Flip the frame image by 180°**: the frame hangs upside-down, so rotate what is sent
+    to it (server `panel.bin`/`.png` at render time, or the firmware when drawing; keep the app
+    previews upright). Make it a setting so the mounting orientation can change.
 
 ## Open decisions
 - Final rotation decay formula and default slot times.
