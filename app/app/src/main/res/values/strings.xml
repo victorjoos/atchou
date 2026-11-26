@@ -21,6 +21,8 @@
     <string name="send_author">Auteur</string>
     <string name="send_show_author">Afficher l’auteur sur le cadre</string>
     <string name="send_dither">Tramage (pour les photos)</string>
+    <string name="crop_hint">Déplacez et pincez le cadre pour choisir la zone affichée.</string>
+    <string name="crop_next">Continuer</string>
     <string name="send_rotate">Pivoter</string>
     <string name="send_crop_hint">Pincez et faites glisser l’aperçu pour recadrer.</string>
     <string name="send_brightness">Luminosité</string>

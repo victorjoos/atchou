@@ -52,12 +52,12 @@ import be.lasarriette.atchou.ui.appViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SendScreen(uri: String, drawing: Boolean, onBack: () -> Unit, onDone: () -> Unit, viewModel: SendViewModel = appViewModel { SendViewModel(it) }) {
+fun SendScreen(uri: String, drawing: Boolean, rotate: Int, crop: String?, onBack: () -> Unit, onDone: () -> Unit, viewModel: SendViewModel = appViewModel { SendViewModel(it) }) {
   val state by viewModel.state.collectAsStateWithLifecycle()
   var boxSize by remember { mutableStateOf(IntSize.Zero) }
   var pickingDate by remember { mutableStateOf(false) }
 
-  LaunchedEffect(uri) { viewModel.onPicked(uri.toUri(), drawing) }
+  LaunchedEffect(uri) { viewModel.onPicked(uri.toUri(), drawing, rotate, crop) }
   LaunchedEffect(state.done) { if (state.done) onDone() }
 
   Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.send_title)) }) }) { padding ->

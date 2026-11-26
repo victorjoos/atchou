@@ -117,7 +117,6 @@ fun CameraScreen(onImage: (String, Boolean) -> Unit, onHistory: () -> Unit) {
 private fun CameraContent(onImage: (String, Boolean) -> Unit, onGallery: () -> Unit, onHistory: () -> Unit) {
   val context = LocalContext.current
   val lifecycleOwner = LocalLifecycleOwner.current
-  // FIT_CENTER shows the whole captured frame so the crop overlay lines up with it.
   val previewView = remember { PreviewView(context).apply { scaleType = PreviewView.ScaleType.FIT_CENTER } }
   val imageCapture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY).build() }
   var useBack by remember { mutableStateOf(true) }
@@ -173,7 +172,6 @@ private fun CameraContent(onImage: (String, Boolean) -> Unit, onGallery: () -> U
     listener.enable()
     onDispose { listener.disable() }
   }
-  val heldLandscape = deviceRotation != Surface.ROTATION_0
   val labelAngle by animateFloatAsState(
     when (deviceRotation) {
       Surface.ROTATION_90 -> 90f
@@ -221,7 +219,6 @@ private fun CameraContent(onImage: (String, Boolean) -> Unit, onGallery: () -> U
 
   Box(modifier = Modifier.fillMaxSize()) {
     AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
-    if (!drawingMode) CropOverlay(heldLandscape = heldLandscape, modifier = Modifier.fillMaxSize())
 
     run {
       Row(modifier = Modifier.statusBarsPadding().fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) { flip() }
@@ -259,36 +256,4 @@ private fun takePicture(context: Context, capture: ImageCapture, onImage: (Strin
       override fun onError(exception: ImageCaptureException) = onError(exception.message ?: "unknown error")
     },
   )
-}
-
-private const val FRAME_ASPECT = 5f / 3f // panel width / height
-private const val CAPTURE_LONG = 4f // ImageCapture default is 4:3
-private const val CAPTURE_SHORT = 3f
-
-/** Dims the parts of the captured frame that the server will crop away. */
-@Composable
-private fun CropOverlay(heldLandscape: Boolean, modifier: Modifier = Modifier) {
-  Canvas(modifier = modifier) {
-    val portrait = size.height >= size.width
-    val imageAspect = if (portrait) CAPTURE_SHORT / CAPTURE_LONG else CAPTURE_LONG / CAPTURE_SHORT
-    // Displayed image rect (FIT_CENTER inside the view).
-    val imgW = if (size.width / size.height < imageAspect) size.width else size.height * imageAspect
-    val imgH = imgW / imageAspect
-    val imgLeft = (size.width - imgW) / 2
-    val imgTop = (size.height - imgH) / 2
-    // Centered 5:3 crop inside the image rect, matching the server's default crop.
-    // Held sideways, the captured frame is landscape, so the 5:3 crop appears as 3:5 on the portrait screen.
-    val frameAspect = if (heldLandscape) 1f / FRAME_ASPECT else FRAME_ASPECT
-    val cropW = if (imageAspect < frameAspect) imgW else imgH * frameAspect
-    val cropH = cropW / frameAspect
-    val cropLeft = imgLeft + (imgW - cropW) / 2
-    val cropTop = imgTop + (imgH - cropH) / 2
-    val dim = Color.Black.copy(alpha = 0.55f)
-
-    drawRect(dim, Offset(0f, 0f), Size(size.width, cropTop))
-    drawRect(dim, Offset(0f, cropTop + cropH), Size(size.width, size.height - cropTop - cropH))
-    drawRect(dim, Offset(0f, cropTop), Size(cropLeft, cropH))
-    drawRect(dim, Offset(cropLeft + cropW, cropTop), Size(size.width - cropLeft - cropW, cropH))
-    drawRect(Color.White, Offset(cropLeft, cropTop), Size(cropW, cropH), style = Stroke(width = 3f))
-  }
 }

@@ -55,7 +55,7 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
     }
   }
 
-  fun onPicked(uri: Uri, drawing: Boolean = false) {
+  fun onPicked(uri: Uri, drawing: Boolean = false, rotate: Int = 0, crop: String? = null) {
     // Drawings use the exact palette: dithering would add noise to flat colors.
     isDrawing = drawing
     if (drawing) _state.update { it.copy(mode = "drawing") }
@@ -67,6 +67,7 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
         imageWidth = bounds.outWidth
         imageHeight = bounds.outHeight
         image = bytes
+        applyInitialCrop(rotate, crop)
         _state.update { it.copy(hasImage = true, error = null) }
         refreshPreview(immediately = true)
       } catch (e: Exception) {
@@ -90,6 +91,16 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
   private fun setMode(value: String) {
     _state.update { it.copy(mode = value) }
     refreshPreview(immediately = true)
+  }
+
+  private fun applyInitialCrop(rotate: Int, crop: String?) {
+    _state.update { it.copy(rotate = rotate) }
+    val (x, y, w, h) = crop?.split(",")?.map { it.toFloat() } ?: return
+    val zoom = (cropSize(1f).first / w).coerceIn(1f, 6f)
+    val (cw, ch) = cropSize(zoom)
+    centerX = (x + w / 2).coerceIn(cw / 2, 1 - cw / 2)
+    centerY = (y + h / 2).coerceIn(ch / 2, 1 - ch / 2)
+    _state.update { it.copy(zoom = zoom) }
   }
 
   fun rotate() {
@@ -140,7 +151,7 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
     return PostOptions(
       author = s.author.trim(), showAuthor = s.showAuthor, mode = s.mode, sender = atchou.settings.senderName,
       rotate = s.rotate, brightness = s.brightness, contrast = s.contrast,
-      crop = if (s.zoom > 1f) "$x,$y,$cw,$ch" else null,
+      crop = "$x,$y,$cw,$ch",
       showOn = s.showOn, pinned = s.pinned, excludeFromRotation = s.excludeFromRotation,
     )
   }

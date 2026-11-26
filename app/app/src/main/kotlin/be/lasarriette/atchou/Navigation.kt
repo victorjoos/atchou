@@ -7,6 +7,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import be.lasarriette.atchou.ui.camera.CameraScreen
+import be.lasarriette.atchou.ui.crop.CropScreen
 import be.lasarriette.atchou.ui.history.HistoryScreen
 import be.lasarriette.atchou.ui.send.SendScreen
 
@@ -26,15 +27,24 @@ fun MainNavigation() {
       entryProvider {
         entry<Camera> {
           CameraScreen(
-            onImage = { uri, drawing -> backStack.add(Send(uri, drawing)) },
+            onImage = { uri, drawing -> backStack.add(if (drawing) Send(uri, true) else Crop(uri)) },
             onHistory = { backStack.add(History) },
           )
         }
         entry<History> { HistoryScreen(onNewPost = { backStack.removeLastOrNull() }) }
+        entry<Crop> { key ->
+          CropScreen(
+            uri = key.uri,
+            onBack = { backStack.removeLastOrNull() },
+            onNext = { rotate, crop -> backStack.add(Send(key.uri, false, rotate, crop)) },
+          )
+        }
         entry<Send> { key ->
           SendScreen(
             uri = key.uri,
             drawing = key.drawing,
+            rotate = key.rotate,
+            crop = key.crop,
             onBack = { backStack.removeLastOrNull() },
             onDone = {
               backStack.removeLastOrNull()
