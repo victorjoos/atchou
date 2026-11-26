@@ -166,3 +166,12 @@ def to_panel_buffer(img: Image.Image) -> bytes:
     idx = np.asarray(img.convert("P"), dtype=np.uint8)
     nat = codes[idx]
     return ((nat[:, 0::2] << 4) | nat[:, 1::2]).tobytes()
+
+
+def flip_panel_buffer(buf: bytes) -> bytes:
+    """Rotate a packed buffer by 180 degrees: reverse the pixel order, i.e. the bytes and the nibbles in each."""
+    return bytes(((b & 0x0F) << 4) | (b >> 4) for b in reversed(buf))
+
+
+def flip_png(png: bytes) -> bytes:
+    return to_png(Image.open(io.BytesIO(png)).rotate(180))

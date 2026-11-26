@@ -17,3 +17,6 @@ min_wake_min = 15
 max_wake_min = 1440
 decay_half_life_days = 365  # rotation weight halves every N days of age
 pin_boost = 3
+
+[frame]
+rotation = 0  # 180 if the frame hangs upside-down

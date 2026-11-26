@@ -11,7 +11,7 @@ from typing import Callable
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 
-from . import battery as lowbatt, calibration, panels, scheduler
+from . import battery as lowbatt, calibration, imaging, panels, scheduler
 from .config import Config
 
 TS = "%Y-%m-%dT%H:%M:%SZ"
@@ -82,18 +82,14 @@ def make_router(
         )
         if calibration.pattern_active(data_dir):
             conn.commit()
-            return serve(request, format, calibration.pattern_file(data_dir, format), '"calibration-pattern"',
-                         {"X-Next-Wake-At": (now + timedelta(minutes=cfg.min_wake_min)).strftime(TS),
-                          "X-Server-Time": now.strftime(TS)})
+            return respond(request, format, calibration.pattern_file(data_dir, format), "calibration-pattern",
+                           {"X-Next-Wake-At": (now + timedelta(minutes=cfg.min_wake_min)).strftime(TS),
+                            "X-Server-Time": now.strftime(TS)})
         pct = battery if battery is not None else dev["battery_pct"]
         if pct is not None and 0 <= pct < lowbatt.CHARGE_BELOW:
             conn.commit()
-            etag = '"low-battery"'
-            headers = {"X-Next-Wake-At": (now + timedelta(hours=12)).strftime(TS), "X-Server-Time": now.strftime(TS), "ETag": etag}
-            if request.headers.get("if-none-match") == etag:
-                return Response(status_code=304, headers=headers)
-            return Response(lowbatt.charge_bytes(format, pct), headers=headers,
-                            media_type="application/octet-stream" if format == "bin" else "image/png")
+            return respond(request, format, lambda: lowbatt.charge_bytes(format, pct), "low-battery",
+                           {"X-Next-Wake-At": (now + timedelta(hours=12)).strftime(TS), "X-Server-Time": now.strftime(TS)})
         posts = all_posts()
         post_id = advance(dev, posts, now)
         conn.commit()
@@ -105,21 +101,27 @@ def make_router(
             return Response(status_code=204, headers=headers)
 
         path, version = panels.panel_file(data_dir, conn, post_id, format)
+        etag = f"{post_id}-{format}-{version}"
         if pct is not None and 0 <= pct < lowbatt.BADGE_BELOW:
-            etag = f'"{post_id}-{format}-{version}-low"'
-            headers["ETag"] = etag
-            if request.headers.get("if-none-match") == etag:
-                return Response(status_code=304, headers=headers)
             png, _ = panels.panel_file(data_dir, conn, post_id, "png")
-            return Response(lowbatt.apply(png, format, pct), headers=headers,
-                            media_type="application/octet-stream" if format == "bin" else "image/png")
-        return serve(request, format, path, f'"{post_id}-{format}-{version}"', headers)
+            return respond(request, format, lambda: lowbatt.apply(png, format, pct), etag + "-low", headers)
+        return respond(request, format, path, etag, headers)
 
-    def serve(request: Request, format: str, path: Path, etag: str, headers: dict):
+    def respond(request: Request, format: str, content, etag: str, headers: dict):
+        """Answer 304 if the frame already has this image, else send a file or bytes (via a callable), turned if configured."""
+        if cfg.frame_rotation % 360 not in (0, 180):
+            raise HTTPException(500, "frame_rotation doit valoir 0 ou 180")
+        flip = cfg.frame_rotation % 360 == 180
+        etag = f'"{etag}-r180"' if flip else f'"{etag}"'
         headers["ETag"] = etag
         if request.headers.get("if-none-match") == etag:
             return Response(status_code=304, headers=headers)
         media = "application/octet-stream" if format == "bin" else "image/png"
-        return FileResponse(path, media_type=media, headers=headers)
+        if not flip and isinstance(content, Path):
+            return FileResponse(content, media_type=media, headers=headers)
+        data = content.read_bytes() if isinstance(content, Path) else content()
+        if flip:
+            data = imaging.flip_panel_buffer(data) if format == "bin" else imaging.flip_png(data)
+        return Response(data, media_type=media, headers=headers)
 
     return router

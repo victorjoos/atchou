@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from atchou_server import db, frame, scheduler
+from atchou_server import db, frame, imaging, scheduler
 from atchou_server.app import create_app
 from atchou_server.config import Config
 
@@ -125,3 +125,21 @@ def test_low_battery_badge_and_charge_screen(tmp_path):
     r = client.get("/frame/image", params={"battery": 3})
     assert r.status_code == 200 and len(r.content) == 192000 and r.headers["etag"] == '"low-battery"'
     assert client.get("/frame/image", params={"battery": 3}, headers={"If-None-Match": '"low-battery"'}).status_code == 304
+
+
+def test_frame_rotation_turns_the_image_and_changes_the_etag(tmp_path):
+    from dataclasses import replace
+    upright, _ = make_client(tmp_path / "a")
+    turned_app = create_app(tmp_path / "b", config=replace(Config(), frame_rotation=180),
+                            now_fn=lambda: local(2026, 12, 3, 10), rng=random.Random(1))
+    turned = TestClient(turned_app)
+    turned.headers["Authorization"] = "Bearer " + frame.add_device(db.connect(tmp_path / "b" / "atchou.sqlite"), "salon")
+    for c in (upright, turned):
+        upload(c, (255, 0, 0))
+    a = upright.get("/frame/image", params={"format": "png"})
+    b = turned.get("/frame/image", params={"format": "png"})
+    assert b.headers["etag"].endswith('-r180"') and a.headers["etag"] != b.headers["etag"]
+    assert Image.open(io.BytesIO(b.content)).convert("RGB") == Image.open(io.BytesIO(a.content)).convert("RGB").rotate(180)
+    ab = upright.get("/frame/image").content
+    bb = turned.get("/frame/image").content
+    assert bb == imaging.flip_panel_buffer(ab) and imaging.flip_panel_buffer(bb) == ab

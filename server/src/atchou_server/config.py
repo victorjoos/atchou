@@ -39,6 +39,8 @@ class Config:
     # 365 keeps even year-old items fairly likely; lower it to favor recent items.
     decay_half_life_days: float = 365.0
     pin_boost: float = 3.0
+    # Turn what is sent to the frame (0 or 180) to match how it hangs; the app previews stay upright.
+    frame_rotation: int = 0
 
     @property
     def tz(self) -> ZoneInfo:
@@ -77,4 +79,5 @@ class Config:
             max_wake_min=int(pick("ATCHOU_MAX_WAKE_MIN", sched.get("max_wake_min"), d.max_wake_min)),
             decay_half_life_days=float(pick("ATCHOU_DECAY_HALF_LIFE_DAYS", sched.get("decay_half_life_days"), d.decay_half_life_days)),
             pin_boost=float(pick("ATCHOU_PIN_BOOST", sched.get("pin_boost"), d.pin_boost)),
+            frame_rotation=int(pick("ATCHOU_FRAME_ROTATION", raw.get("frame", {}).get("rotation"), d.frame_rotation)),
         )
