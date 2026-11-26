@@ -1,0 +1,19 @@
+menu "Atchou frame"
+    config ATCHOU_DEFAULT_SERVER_URL
+        string "Default server URL pre-filled in the setup form"
+        default "https://"
+
+    config ATCHOU_FALLBACK_SLEEP_SECONDS
+        int "Sleep time when the server gave no next-wake time (s)"
+        default 21600
+
+    config ATCHOU_ALLOW_PLAIN_HTTP
+        bool "Allow http:// server URLs (development only)"
+        default n
+        help
+            The device token travels in a header, so keep this off for real use.
+
+    config ATCHOU_PORTAL_TIMEOUT_SECONDS
+        int "How long the setup portal stays open (s)"
+        default 600
+endmenu

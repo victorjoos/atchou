@@ -32,7 +32,7 @@ _Last updated: 2026-11-20_
 2. **7. Paint/text canvas** limited to the 6 colors.
 3. **12. Deployment:** first run on the VPS (playbook written, untested).
 4. **13. Palette tuning** against the real panel.
-5. **14. ESP32-S3 firmware.**
+5. **14. ESP32-S3 firmware:** first version builds (`firmware/`), untested on the device. See `firmware/README.md`.
 
 ## Open decisions
 - Tune `ATCHOU_DECAY_HALF_LIFE_DAYS` (default 365) once the app is in use.

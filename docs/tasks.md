@@ -49,7 +49,7 @@ deployment, firmware.
 13. **Palette tuning** against the physical panel; optional dithering for drawings.
 
 ## Phase 4 – Firmware
-14. ESP32-S3 firmware: Wi-Fi, poll, download, display, battery, deep sleep.
+14. 🟡 ESP32-S3 firmware: Wi-Fi, poll, download, display, battery, deep sleep. Builds; needs hardware validation (RTC wake, sleep current).
 
 ## Open decisions
 - Final rotation decay formula and default slot times.

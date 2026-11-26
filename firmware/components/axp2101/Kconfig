@@ -1,0 +1,9 @@
+menu "AXP2101 PMIC"
+    config AXP2101_DISABLE_RAILS_ON_SLEEP
+        bool "Switch off the PMIC output rails before deep sleep"
+        default n
+        help
+            Saves power but, on some board revisions, switching off ALDO3 clamps
+            the I2C bus so the RTC and PMIC become unreachable after wake-up.
+            Enable only after checking on your board that wake-ups still work.
+endmenu
