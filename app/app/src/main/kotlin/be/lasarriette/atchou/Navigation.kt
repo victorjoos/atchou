@@ -47,7 +47,8 @@ fun MainNavigation() {
             crop = key.crop,
             onBack = { backStack.removeLastOrNull() },
             onDone = {
-              backStack.removeLastOrNull()
+              // Back to the camera (dropping the crop and send screens), then show the history above it.
+              while (backStack.size > 1) backStack.removeLastOrNull()
               backStack.add(History)
             },
           )
