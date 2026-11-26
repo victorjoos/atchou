@@ -110,3 +110,18 @@ def test_frame_flow(tmp_path):
     client.delete(f"/posts/{b}")
     r = client.get("/frame/image", params={"format": "png"})
     assert Image.open(io.BytesIO(r.content)).convert("RGB").getpixel((0, 0)) == (255, 0, 0)
+
+
+def test_low_battery_badge_and_charge_screen(tmp_path):
+    client, clock = make_client(tmp_path)
+    upload(client, (255, 255, 255))
+    normal = client.get("/frame/image", params={"format": "png", "battery": 80})
+    low = client.get("/frame/image", params={"format": "png", "battery": 10})
+    assert low.status_code == 200 and low.headers["etag"].endswith('-low"')
+    a = Image.open(io.BytesIO(normal.content)).convert("RGB")
+    b = Image.open(io.BytesIO(low.content)).convert("RGB")
+    assert a != b and a.getpixel((0, 0)) == b.getpixel((0, 0))  # only the badge differs
+
+    r = client.get("/frame/image", params={"battery": 3})
+    assert r.status_code == 200 and len(r.content) == 192000 and r.headers["etag"] == '"low-battery"'
+    assert client.get("/frame/image", params={"battery": 3}, headers={"If-None-Match": '"low-battery"'}).status_code == 304

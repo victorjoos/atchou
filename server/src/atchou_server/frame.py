@@ -11,7 +11,7 @@ from typing import Callable
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 
-from . import calibration, panels, scheduler
+from . import battery as lowbatt, calibration, panels, scheduler
 from .config import Config
 
 TS = "%Y-%m-%dT%H:%M:%SZ"
@@ -85,6 +85,15 @@ def make_router(
             return serve(request, format, calibration.pattern_file(data_dir, format), '"calibration-pattern"',
                          {"X-Next-Wake-At": (now + timedelta(minutes=cfg.min_wake_min)).strftime(TS),
                           "X-Server-Time": now.strftime(TS)})
+        pct = battery if battery is not None else dev["battery_pct"]
+        if pct is not None and 0 <= pct < lowbatt.CHARGE_BELOW:
+            conn.commit()
+            etag = '"low-battery"'
+            headers = {"X-Next-Wake-At": (now + timedelta(hours=12)).strftime(TS), "X-Server-Time": now.strftime(TS), "ETag": etag}
+            if request.headers.get("if-none-match") == etag:
+                return Response(status_code=304, headers=headers)
+            return Response(lowbatt.charge_bytes(format, pct), headers=headers,
+                            media_type="application/octet-stream" if format == "bin" else "image/png")
         posts = all_posts()
         post_id = advance(dev, posts, now)
         conn.commit()
@@ -96,6 +105,14 @@ def make_router(
             return Response(status_code=204, headers=headers)
 
         path, version = panels.panel_file(data_dir, conn, post_id, format)
+        if pct is not None and 0 <= pct < lowbatt.BADGE_BELOW:
+            etag = f'"{post_id}-{format}-{version}-low"'
+            headers["ETag"] = etag
+            if request.headers.get("if-none-match") == etag:
+                return Response(status_code=304, headers=headers)
+            png, _ = panels.panel_file(data_dir, conn, post_id, "png")
+            return Response(lowbatt.apply(png, format, pct), headers=headers,
+                            media_type="application/octet-stream" if format == "bin" else "image/png")
         return serve(request, format, path, f'"{post_id}-{format}-{version}"', headers)
 
     def serve(request: Request, format: str, path: Path, etag: str, headers: dict):

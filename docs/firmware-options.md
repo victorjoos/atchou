@@ -192,4 +192,4 @@ redraw even when nothing changed.
 - No RTC backup cell is needed: the PCF85063 runs from the main battery, and NTP fixes the time after a total power loss.
 - The ETag is stored in NVS and only after a successful display.
 - The setup screen is rendered by the firmware (8×8 public-domain font + QR code), with a random AP password.
-- Low-battery handling stays server-side (the frame sends `battery` and `battery_mv`); not implemented yet.
+- Low-battery handling is server-side (the frame sends `battery` and `battery_mv`): below 15 % a badge is drawn on the image, below 5 % a "charge me" screen is served with a 12 h wake interval (`server/src/atchou_server/battery.py`).

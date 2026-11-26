@@ -54,5 +54,6 @@ deployment, firmware.
 ## Open decisions
 - Final rotation decay formula and default slot times.
 - Image upload size limit (the app currently downscales to 1600 px; no server cap).
+- Low-battery overlay: done (badge < 15 %, charge screen < 5 %).
 - Verify the panel's native color codes (currently from memory).
 - Decided: Android min SDK 28.
