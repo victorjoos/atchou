@@ -2,6 +2,7 @@ package be.lasarriette.atchou.ui.send
 
 import be.lasarriette.atchou.R
 import android.app.Application
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +24,13 @@ data class SendState(
   val author: String = "",
   val showAuthor: Boolean = true,
   val mode: String = "dither",
+  val rotate: Int = 0,
+  val brightness: Float = 1f,
+  val contrast: Float = 1f,
+  val zoom: Float = 1f,
+  val showOn: String? = null,
+  val pinned: Boolean = false,
+  val excludeFromRotation: Boolean = false,
   val sending: Boolean = false,
   val done: Boolean = false,
   val error: String? = null,
@@ -36,6 +44,10 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
   private var isDrawing = false
   private var image: ByteArray? = null
   private var previewJob: Job? = null
+  private var imageWidth = 1
+  private var imageHeight = 1
+  private var centerX = 0.5f
+  private var centerY = 0.5f
 
   init {
     viewModelScope.launch {
@@ -49,7 +61,12 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
     if (drawing) _state.update { it.copy(mode = "drawing") }
     viewModelScope.launch {
       try {
-        image = loadForUpload(getApplication(), uri)
+        val bytes = loadForUpload(getApplication(), uri)
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        imageWidth = bounds.outWidth
+        imageHeight = bounds.outHeight
+        image = bytes
         _state.update { it.copy(hasImage = true, error = null) }
         refreshPreview(immediately = true)
       } catch (e: Exception) {
@@ -75,9 +92,57 @@ class SendViewModel(app: Application) : AndroidViewModel(app) {
     refreshPreview(immediately = true)
   }
 
+  fun rotate() {
+    _state.update { it.copy(rotate = (it.rotate + 90) % 360, zoom = 1f) }
+    centerX = 0.5f
+    centerY = 0.5f
+    refreshPreview(immediately = true)
+  }
+
+  fun setBrightness(value: Float) {
+    _state.update { it.copy(brightness = value) }
+    refreshPreview()
+  }
+
+  fun setContrast(value: Float) {
+    _state.update { it.copy(contrast = value) }
+    refreshPreview()
+  }
+
+  fun setShowOn(value: String?) = _state.update { it.copy(showOn = value) }
+  fun setPinned(value: Boolean) = _state.update { it.copy(pinned = value) }
+  fun setExclude(value: Boolean) = _state.update { it.copy(excludeFromRotation = value) }
+
+  /** Size of the crop box in the rotated image, normalized, for a given zoom (a 5:3 pixel box). */
+  private fun cropSize(zoom: Float): Pair<Float, Float> {
+    val quarter = _state.value.rotate % 180 != 0
+    val w = (if (quarter) imageHeight else imageWidth).toFloat()
+    val h = (if (quarter) imageWidth else imageHeight).toFloat()
+    val (cw, ch) = if (w / h > 5f / 3f) (h * 5f / 3f / w) to 1f else 1f to (w * 3f / 5f / h)
+    return cw / zoom to ch / zoom
+  }
+
+  /** Pinch/drag on the preview: [panX]/[panY] are fractions of the visible box, [zoomBy] a factor. */
+  fun transform(panX: Float, panY: Float, zoomBy: Float) {
+    val zoom = (_state.value.zoom * zoomBy).coerceIn(1f, 6f)
+    val (cw, ch) = cropSize(zoom)
+    centerX = (centerX - panX * cw).coerceIn(cw / 2, 1 - cw / 2)
+    centerY = (centerY - panY * ch).coerceIn(ch / 2, 1 - ch / 2)
+    _state.update { it.copy(zoom = zoom) }
+    refreshPreview()
+  }
+
   private fun options(): PostOptions {
     val s = _state.value
-    return PostOptions(author = s.author.trim(), showAuthor = s.showAuthor, mode = s.mode, sender = atchou.settings.senderName)
+    val (cw, ch) = cropSize(s.zoom)
+    val x = (centerX - cw / 2).coerceIn(0f, 1 - cw)
+    val y = (centerY - ch / 2).coerceIn(0f, 1 - ch)
+    return PostOptions(
+      author = s.author.trim(), showAuthor = s.showAuthor, mode = s.mode, sender = atchou.settings.senderName,
+      rotate = s.rotate, brightness = s.brightness, contrast = s.contrast,
+      crop = if (s.zoom > 1f) "$x,$y,$cw,$ch" else null,
+      showOn = s.showOn, pinned = s.pinned, excludeFromRotation = s.excludeFromRotation,
+    )
   }
 
   private fun refreshPreview(immediately: Boolean = false) {

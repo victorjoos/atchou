@@ -21,6 +21,15 @@
     <string name="send_author">Auteur</string>
     <string name="send_show_author">Afficher l’auteur sur le cadre</string>
     <string name="send_dither">Tramage (pour les photos)</string>
+    <string name="send_rotate">Pivoter</string>
+    <string name="send_crop_hint">Pincez et faites glisser l’aperçu pour recadrer.</string>
+    <string name="send_brightness">Luminosité</string>
+    <string name="send_contrast">Contraste</string>
+    <string name="send_pinned">Épingler (garder longtemps)</string>
+    <string name="send_exclude">Exclure de la rotation</string>
+    <string name="send_show_on">Afficher le</string>
+    <string name="send_show_on_today">Aujourd’hui</string>
+    <string name="send_show_on_clear">Effacer</string>
     <string name="send_sending">Envoi…</string>
     <string name="send_submit">Envoyer au cadre</string>
     <string name="send_error_read">Impossible de lire l’image : %1$s</string>

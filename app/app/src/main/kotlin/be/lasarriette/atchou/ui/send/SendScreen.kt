@@ -15,6 +15,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.Slider
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +54,8 @@ import be.lasarriette.atchou.ui.appViewModel
 @Composable
 fun SendScreen(uri: String, drawing: Boolean, onBack: () -> Unit, onDone: () -> Unit, viewModel: SendViewModel = appViewModel { SendViewModel(it) }) {
   val state by viewModel.state.collectAsStateWithLifecycle()
+  var boxSize by remember { mutableStateOf(IntSize.Zero) }
+  var pickingDate by remember { mutableStateOf(false) }
 
   LaunchedEffect(uri) { viewModel.onPicked(uri.toUri(), drawing) }
   LaunchedEffect(state.done) { if (state.done) onDone() }
@@ -52,7 +66,13 @@ fun SendScreen(uri: String, drawing: Boolean, onBack: () -> Unit, onDone: () -> 
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       Box(
-        modifier = Modifier.fillMaxWidth().aspectRatio(5f / 3f),
+        modifier = Modifier.fillMaxWidth().aspectRatio(5f / 3f).clipToBounds()
+          .onSizeChanged { boxSize = it }
+          .pointerInput(Unit) {
+            detectTransformGestures { _, pan, zoom, _ ->
+              if (boxSize.width > 0) viewModel.transform(pan.x / boxSize.width, pan.y / boxSize.height, zoom)
+            }
+          },
         contentAlignment = Alignment.Center,
       ) {
         val bitmap = remember(state.preview) {
@@ -63,7 +83,15 @@ fun SendScreen(uri: String, drawing: Boolean, onBack: () -> Unit, onDone: () -> 
         }
         if (state.previewLoading || (!state.hasImage && state.error == null)) CircularProgressIndicator()
       }
-      OutlinedButton(onClick = onBack) { Text(stringResource(R.string.send_retake)) }
+      Text(stringResource(R.string.send_crop_hint), style = MaterialTheme.typography.bodySmall)
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(onClick = onBack) { Text(stringResource(R.string.send_retake)) }
+        OutlinedButton(onClick = viewModel::rotate) { Text(stringResource(R.string.send_rotate)) }
+      }
+      Text(stringResource(R.string.send_brightness))
+      Slider(value = state.brightness, onValueChange = viewModel::setBrightness, valueRange = 0.5f..1.5f)
+      Text(stringResource(R.string.send_contrast))
+      Slider(value = state.contrast, onValueChange = viewModel::setContrast, valueRange = 0.5f..1.5f)
 
       OutlinedTextField(
         value = state.author,
@@ -87,6 +115,20 @@ fun SendScreen(uri: String, drawing: Boolean, onBack: () -> Unit, onDone: () -> 
         Switch(checked = state.mode == "dither", onCheckedChange = { viewModel.setDither(it) })
       }
 
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(stringResource(R.string.send_pinned), modifier = Modifier.weight(1f))
+        Switch(checked = state.pinned, onCheckedChange = viewModel::setPinned)
+      }
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(stringResource(R.string.send_exclude), modifier = Modifier.weight(1f))
+        Switch(checked = state.excludeFromRotation, onCheckedChange = viewModel::setExclude)
+      }
+      Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.send_show_on), modifier = Modifier.weight(1f))
+        OutlinedButton(onClick = { pickingDate = true }) { Text(state.showOn ?: stringResource(R.string.send_show_on_today)) }
+        if (state.showOn != null) TextButton(onClick = { viewModel.setShowOn(null) }) { Text(stringResource(R.string.send_show_on_clear)) }
+      }
+
       state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
       Button(
@@ -96,4 +138,24 @@ fun SendScreen(uri: String, drawing: Boolean, onBack: () -> Unit, onDone: () -> 
       ) { Text(stringResource(if (state.sending) R.string.send_sending else R.string.send_submit)) }
     }
   }
+  if (pickingDate) DateDialog { picked ->
+    pickingDate = false
+    if (picked != null) viewModel.setShowOn(picked)
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateDialog(onPicked: (String?) -> Unit) {
+  val pickerState = rememberDatePickerState()
+  DatePickerDialog(
+    onDismissRequest = { onPicked(null) },
+    confirmButton = {
+      TextButton(onClick = {
+        val millis = pickerState.selectedDateMillis
+        onPicked(millis?.let { java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate().toString() })
+      }) { Text(stringResource(android.R.string.ok)) }
+    },
+    dismissButton = { TextButton(onClick = { onPicked(null) }) { Text(stringResource(android.R.string.cancel)) } },
+  ) { DatePicker(state = pickerState) }
 }

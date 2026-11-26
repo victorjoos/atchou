@@ -13,7 +13,7 @@ deployment, firmware.
 4. ✅ **Android: project + upload flow**: send screen, author field with
    suggestions, send, show server preview.
 5. ✅ **Android: history** (basic grid + delete done; reschedule/pin pending editor): gallery of all posts, delete.
-6. **Android: editor**: crop (5:3), rotate, brightness/contrast, author-overlay
+6. 🟡 (rotate, pinch/drag crop, brightness/contrast, show-on date, pin, exclude done on the send screen; editing existing posts from the history still to do) **Android: editor**: crop (5:3), rotate, brightness/contrast, author-overlay
    toggle (overlay rendered by server), "show on date", pin, exclude.
 7. **Android: paint/text canvas**: 6-color palette, brush, eraser, text; uploads
    as a post (exact palette, no dithering).

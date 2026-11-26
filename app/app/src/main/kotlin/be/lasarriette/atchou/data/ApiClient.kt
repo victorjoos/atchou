@@ -34,6 +34,11 @@ data class PostOptions(
   val pinned: Boolean = false,
   val excludeFromRotation: Boolean = false,
   val mode: String = "dither",
+  val rotate: Int = 0,
+  val brightness: Float = 1f,
+  val contrast: Float = 1f,
+  /** Normalized "x,y,w,h" in the rotated image, or null for the automatic centered crop. */
+  val crop: String? = null,
 )
 
 @Serializable
@@ -95,6 +100,10 @@ class ApiClient(
       .addFormDataPart("author", o.author)
       .addFormDataPart("show_author", o.showAuthor.toString())
       .addFormDataPart("mode", o.mode)
+      .addFormDataPart("rotate", o.rotate.toString())
+      .addFormDataPart("brightness", o.brightness.toString())
+      .addFormDataPart("contrast", o.contrast.toString())
+    o.crop?.let { b.addFormDataPart("crop", it) }
     if (withPostFields) {
       b.addFormDataPart("sender", o.sender)
         .addFormDataPart("pinned", o.pinned.toString())
