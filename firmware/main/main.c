@@ -120,7 +120,16 @@ void app_main(void)
     board_led_activity(false);
 
     frame_config_t cfg;
-    if (!storage_load_config(&cfg)) {
+    bool has_wifi = storage_load_config(&cfg);
+    if (!cfg.token[0]) {
+        ESP_LOGE(TAG, "No device token compiled in");
+        screen_render_message(panel, "Jeton absent", "Ce cadre a été flashé sans jeton.",
+                              "Reflashez-le avec le jeton", "de l'appareil.");
+        epaper_display(panel);
+        epaper_enter_deepsleep();
+        enter_deep_sleep(CONFIG_ATCHOU_FALLBACK_SLEEP_SECONDS);
+    }
+    if (!has_wifi) {
         portal_run(panel);  // reboots after saving; returns only on timeout
         enter_deep_sleep(CONFIG_ATCHOU_FALLBACK_SLEEP_SECONDS);
     }
@@ -157,7 +166,7 @@ void app_main(void)
     if (res.status == 401) {
         if (!storage_get_auth_failed()) {
             screen_render_message(panel, "Accès refusé", "Le jeton de ce cadre est refusé",
-                                  "par le serveur.", "Appui long sur KEY pour reconfigurer.");
+                                  "par le serveur.", "Reflashez-le avec le bon jeton.");
             epaper_display(panel);
             epaper_enter_deepsleep();
             storage_set_auth_failed(true);

@@ -1,7 +1,14 @@
 menu "Atchou frame"
-    config ATCHOU_DEFAULT_SERVER_URL
-        string "Default server URL pre-filled in the setup form"
-        default "https://"
+    config ATCHOU_SERVER_URL
+        string "Server URL"
+        default "https://atchou.lasarriette.be"
+
+    config ATCHOU_DEVICE_TOKEN
+        string "Device token (bearer)"
+        default ""
+        help
+            Set it in the gitignored sdkconfig.secrets file (see firmware/README.md)
+            rather than here, so it never ends up in git.
 
     config ATCHOU_FALLBACK_SLEEP_SECONDS
         int "Sleep time when the server gave no next-wake time (s)"

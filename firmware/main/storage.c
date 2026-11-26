@@ -4,6 +4,7 @@
 
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "sdkconfig.h"
 
 #define NS "atchou"
 
@@ -24,34 +25,33 @@ static bool get_str(nvs_handle_t h, const char *key, char *out, size_t cap)
     return nvs_get_str(h, key, out, &len) == ESP_OK;
 }
 
+// Server URL and token are fixed at flash time; only the Wi-Fi is stored.
 bool storage_load_config(frame_config_t *cfg)
 {
     nvs_handle_t h;
     memset(cfg, 0, sizeof(*cfg));
+    strlcpy(cfg->url, CONFIG_ATCHOU_SERVER_URL, sizeof cfg->url);
+    strlcpy(cfg->token, CONFIG_ATCHOU_DEVICE_TOKEN, sizeof cfg->token);
     if (nvs_open(NS, NVS_READONLY, &h) != ESP_OK) {
         return false;
     }
     get_str(h, "ssid", cfg->ssid, sizeof cfg->ssid);
     get_str(h, "pass", cfg->pass, sizeof cfg->pass);
-    get_str(h, "url", cfg->url, sizeof cfg->url);
-    get_str(h, "token", cfg->token, sizeof cfg->token);
     nvs_close(h);
-    return cfg->ssid[0] && cfg->url[0] && cfg->token[0];
+    return cfg->ssid[0] != '\0';
 }
 
-esp_err_t storage_save_config(const frame_config_t *cfg)
+esp_err_t storage_save_wifi(const char *ssid, const char *pass)
 {
     nvs_handle_t h;
     esp_err_t ret = nvs_open(NS, NVS_READWRITE, &h);
     if (ret != ESP_OK) {
         return ret;
     }
-    ret = nvs_set_str(h, "ssid", cfg->ssid);
-    if (ret == ESP_OK) ret = nvs_set_str(h, "pass", cfg->pass);
-    if (ret == ESP_OK) ret = nvs_set_str(h, "url", cfg->url);
-    if (ret == ESP_OK) ret = nvs_set_str(h, "token", cfg->token);
+    ret = nvs_set_str(h, "ssid", ssid);
+    if (ret == ESP_OK) ret = nvs_set_str(h, "pass", pass);
     if (ret == ESP_OK) {
-        nvs_erase_key(h, "etag");  // new settings: force a fresh download
+        nvs_erase_key(h, "etag");  // new network: force a fresh download
         ret = nvs_commit(h);
     }
     nvs_close(h);

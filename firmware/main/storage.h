@@ -13,8 +13,8 @@ typedef struct {
 } frame_config_t;
 
 esp_err_t storage_init(void);
-bool storage_load_config(frame_config_t *cfg);  // false if not (fully) configured
-esp_err_t storage_save_config(const frame_config_t *cfg);
+bool storage_load_config(frame_config_t *cfg);  // false if no Wi-Fi is stored
+esp_err_t storage_save_wifi(const char *ssid, const char *pass);
 esp_err_t storage_forget_wifi(void);
 
 bool storage_get_etag(char *out, size_t cap);

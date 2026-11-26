@@ -14,14 +14,25 @@ Host tests of the pure logic (sleep planning, form decoding):
 
     gcc -Wall -Wextra -o /tmp/test_logic host_tests/test_logic.c main/sleep_plan.c main/form.c && /tmp/test_logic
 
+## Server URL and token (fixed at flash time)
+
+The URL defaults to `https://atchou.lasarriette.be` (`ATCHOU_SERVER_URL`). The device token is
+read from a gitignored file, so it never reaches git:
+
+    echo 'CONFIG_ATCHOU_DEVICE_TOKEN="<token>"' > sdkconfig.secrets
+    rm -f sdkconfig                  # sdkconfig.defaults/.secrets only apply when it is regenerated
+    idf.py build flash
+
+To change the URL, set `CONFIG_ATCHOU_SERVER_URL` in the same file and reflash.
+
 ## Behaviour
 
 - First boot (or no stored settings): the frame opens a Wi-Fi access point and shows its name,
-  a random password, the address and a join QR code on the panel. The form asks for the Wi-Fi,
-  the server URL and the device token.
+  a random password, the address and a join QR code on the panel. The form only asks for the Wi-Fi: it lists the
+  networks the frame sees (plus "Autre réseau…" for a hidden one) and takes the password.
 - KEY short press: refresh now (ignores the ETag). KEY held 5 s: forget the Wi-Fi and reopen setup.
 - Failures: retry after 15 min, then 1 h, then `ATCHOU_FALLBACK_SLEEP_SECONDS` (default 6 h).
-- HTTP 401: shows an error screen once, then sleeps at the fallback interval.
+- HTTP 401 or a missing token: shows an error screen once, then sleeps at the fallback interval.
 - Only `https://` is accepted unless `ATCHOU_ALLOW_PLAIN_HTTP` is set (`idf.py menuconfig`).
 
 ## To verify on the hardware

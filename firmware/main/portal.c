@@ -24,7 +24,28 @@ static const char *TAG = "portal";
 
 #define MAX_SCAN 20
 
-static char s_options[MAX_SCAN * 48 + 8];
+static char s_options[4096];
+
+static size_t html_escape(const char *in, char *out, size_t cap)
+{
+    size_t n = 0;
+    for (; *in; in++) {
+        const char *rep = *in == '&' ? "&amp;" : *in == '<' ? "&lt;" : *in == '>' ? "&gt;"
+                        : *in == '"' ? "&quot;" : *in == '\'' ? "&#39;" : NULL;
+        size_t len = rep ? strlen(rep) : 1;
+        if (n + len + 1 > cap) {
+            break;
+        }
+        if (rep) {
+            memcpy(out + n, rep, len);
+        } else {
+            out[n] = *in;
+        }
+        n += len;
+    }
+    out[n] = '\0';
+    return n;
+}
 
 static void build_scan_options(void)
 {
@@ -41,35 +62,41 @@ static void build_scan_options(void)
     size_t len = 0;
     for (int i = 0; i < n; i++) {
         const char *ssid = (const char *)recs[i].ssid;
-        // Skip names that would need HTML escaping
-        if (!ssid[0] || strpbrk(ssid, "<>&\"'")) {
+        bool dup = false;
+        for (int j = 0; j < i; j++) {
+            dup |= strcmp(ssid, (const char *)recs[j].ssid) == 0;
+        }
+        if (!ssid[0] || dup || len + 400 > sizeof s_options) {
             continue;
         }
-        len += snprintf(s_options + len, sizeof s_options - len, "<option value=\"%s\">", ssid);
-        if (len >= sizeof s_options - 48) {
-            break;
-        }
+        char esc[200];
+        html_escape(ssid, esc, sizeof esc);
+        len += snprintf(s_options + len, sizeof s_options - len, "<option value=\"%s\">%s</option>",
+                        esc, esc);
     }
 }
 
 static esp_err_t form_handler(httpd_req_t *req)
 {
-    static char page[2600];
+    static char page[6144];
     snprintf(page, sizeof page,
              "<!doctype html><html lang=fr><head><meta charset=utf-8>"
              "<meta name=viewport content='width=device-width,initial-scale=1'>"
              "<title>Cadre photo</title><style>body{font-family:sans-serif;max-width:28em;"
              "margin:1em auto;padding:0 1em}label{display:block;margin-top:1em;font-weight:bold}"
-             "input{width:100%%;padding:.6em;font-size:1em;box-sizing:border-box}"
+             "input,select{width:100%%;padding:.6em;font-size:1em;box-sizing:border-box}"
              "button{margin-top:1.5em;padding:.8em;width:100%%;font-size:1.1em}</style></head>"
              "<body><h1>Configuration du cadre</h1><form method=post action=/save>"
-             "<label>Réseau Wi-Fi</label><input name=ssid list=nets required maxlength=32>"
-             "<datalist id=nets>%s</datalist>"
+             "<label>Réseau Wi-Fi</label><select name=ssid id=ssid "
+             "onchange=\"document.getElementById('o').style.display=this.value==''?'block':'none'\">"
+             "%s<option value=''>Autre réseau…</option></select>"
+             "<input name=other id=o placeholder='Nom du réseau' maxlength=32 style=display:none>"
              "<label>Mot de passe Wi-Fi</label><input name=pass type=password maxlength=64>"
-             "<label>Adresse du serveur</label><input name=url value='%s' required maxlength=159>"
-             "<label>Jeton de l'appareil</label><input name=token required maxlength=95>"
-             "<button>Enregistrer</button></form></body></html>",
-             s_options, CONFIG_ATCHOU_DEFAULT_SERVER_URL);
+             "<button>Enregistrer</button></form>"
+             "<script>if(!document.querySelector('#ssid option[value]:not([value=\"\"])')){"
+             "document.getElementById('ssid').value='';"
+             "document.getElementById('o').style.display='block'}</script></body></html>",
+             s_options);
     httpd_resp_set_type(req, "text/html; charset=utf-8");
     return httpd_resp_send(req, page, HTTPD_RESP_USE_STRLEN);
 }
@@ -96,14 +123,18 @@ static esp_err_t save_handler(httpd_req_t *req)
     }
     body[got] = '\0';
 
-    frame_config_t cfg = {0};
-    if (!form_get(body, "ssid", cfg.ssid, sizeof cfg.ssid) || !cfg.ssid[0] ||
-        !form_get(body, "pass", cfg.pass, sizeof cfg.pass) ||
-        !form_get(body, "url", cfg.url, sizeof cfg.url) || !cfg.url[0] ||
-        !form_get(body, "token", cfg.token, sizeof cfg.token) || !cfg.token[0]) {
+    char ssid[33], other[33], pass[65];
+    if (!form_get(body, "ssid", ssid, sizeof ssid) ||
+        !form_get(body, "pass", pass, sizeof pass)) {
         return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Champs manquants ou trop longs");
     }
-    if (storage_save_config(&cfg) != ESP_OK) {
+    if (!ssid[0] && form_get(body, "other", other, sizeof other)) {
+        strlcpy(ssid, other, sizeof ssid);
+    }
+    if (!ssid[0]) {
+        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Réseau manquant");
+    }
+    if (storage_save_wifi(ssid, pass) != ESP_OK) {
         return httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Échec de l'enregistrement");
     }
     httpd_resp_set_type(req, "text/html; charset=utf-8");
@@ -136,8 +167,8 @@ void portal_run(uint8_t *panel_buf)
 
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
-    char ssid[24];
-    snprintf(ssid, sizeof ssid, "Cadre-%02X%02X", mac[4], mac[5]);
+    char ap_name[24];
+    snprintf(ap_name, sizeof ap_name, "Cadre-%02X%02X", mac[4], mac[5]);
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -150,9 +181,9 @@ void portal_run(uint8_t *panel_buf)
     build_scan_options();
 
     wifi_config_t ap = {0};
-    strlcpy((char *)ap.ap.ssid, ssid, sizeof ap.ap.ssid);
+    strlcpy((char *)ap.ap.ssid, ap_name, sizeof ap.ap.ssid);
     strlcpy((char *)ap.ap.password, pass, sizeof ap.ap.password);
-    ap.ap.ssid_len = strlen(ssid);
+    ap.ap.ssid_len = strlen(ap_name);
     ap.ap.channel = 1;
     ap.ap.max_connection = 2;
     ap.ap.authmode = WIFI_AUTH_WPA2_PSK;
@@ -170,10 +201,10 @@ void portal_run(uint8_t *panel_buf)
     httpd_register_uri_handler(server, &save);
     httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, redirect_handler);
     dns_server_start();
-    ESP_LOGI(TAG, "Portal up: SSID %s", ssid);
+    ESP_LOGI(TAG, "Portal up: SSID %s", ap_name);
 
     // The panel refresh takes ~25 s; the portal is already usable meanwhile.
-    screen_render_setup(panel_buf, ssid, pass);
+    screen_render_setup(panel_buf, ap_name, pass);
     epaper_display(panel_buf);
     epaper_enter_deepsleep();
 
