@@ -43,3 +43,14 @@ Scheduling env vars (defaults): `ATCHOU_TIMEZONE` (Europe/Brussels), `ATCHOU_SLO
 `ATCHOU_WINDOW_START`/`ATCHOU_WINDOW_END` (06:00/22:00), `ATCHOU_BUSY_INTERVAL_MIN` (60),
 `ATCHOU_MIN_WAKE_MIN`/`ATCHOU_MAX_WAKE_MIN` (15/1440), `ATCHOU_DECAY_HALF_LIFE_DAYS` (365: rotation weight halves
 every N days of age), `ATCHOU_PIN_BOOST` (3: weight multiplier for pinned posts).
+
+## Panel color calibration
+
+The server keeps the original image and quantizes when the frame asks, using the measured palette (`data/palette.json`).
+
+1. `uv run python -m atchou_server.calibration pattern`, then short-press KEY: the frame shows the chart.
+2. Photograph the screen (daylight, no glare), crop to the screen, landscape.
+3. `uv run python -m atchou_server.calibration measure photo.jpg`
+4. `uv run python -m atchou_server.calibration clear`, then press KEY: the image uses the measured palette.
+
+`reset` removes the measured palette. In Docker, run the same commands with `docker exec atchou-atchou-1 python -m atchou_server.calibration ...`.

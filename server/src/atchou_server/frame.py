@@ -11,7 +11,7 @@ from typing import Callable
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 
-from . import scheduler
+from . import calibration, panels, scheduler
 from .config import Config
 
 TS = "%Y-%m-%dT%H:%M:%SZ"
@@ -80,6 +80,11 @@ def make_router(
             "UPDATE devices SET last_seen = ?, battery_pct = COALESCE(?, battery_pct), battery_mv = COALESCE(?, battery_mv) WHERE id = ?",
             (now.strftime(TS), battery, battery_mv, dev["id"]),
         )
+        if calibration.pattern_active(data_dir):
+            conn.commit()
+            return serve(request, format, calibration.pattern_file(data_dir, format), '"calibration-pattern"',
+                         {"X-Next-Wake-At": (now + timedelta(minutes=cfg.min_wake_min)).strftime(TS),
+                          "X-Server-Time": now.strftime(TS)})
         posts = all_posts()
         post_id = advance(dev, posts, now)
         conn.commit()
@@ -90,8 +95,10 @@ def make_router(
         if post_id is None:
             return Response(status_code=204, headers=headers)
 
-        path = data_dir / "posts" / str(post_id) / ("panel.bin" if format == "bin" else "rendered.png")
-        etag = f'"{post_id}-{format}-{path.stat().st_mtime_ns}"'
+        path, version = panels.panel_file(data_dir, conn, post_id, format)
+        return serve(request, format, path, f'"{post_id}-{format}-{version}"', headers)
+
+    def serve(request: Request, format: str, path: Path, etag: str, headers: dict):
         headers["ETag"] = etag
         if request.headers.get("if-none-match") == etag:
             return Response(status_code=304, headers=headers)

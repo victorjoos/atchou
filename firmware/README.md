@@ -30,7 +30,7 @@ To change the URL, set `CONFIG_ATCHOU_SERVER_URL` in the same file and reflash.
 - First boot (or no stored settings): the frame opens a Wi-Fi access point and shows its name,
   a random password, the address and a join QR code on the panel. The form only asks for the Wi-Fi: it lists the
   networks the frame sees (plus "Autre réseau…" for a hidden one) and takes the password.
-- KEY short press: refresh now (ignores the ETag). KEY held 5 s: forget the Wi-Fi and reopen setup.
+- KEY short press: refresh now (ignores the ETag). KEY held 8 s: forget the Wi-Fi and reopen setup.
 - Failures: retry after 15 min, then 1 h, then `ATCHOU_FALLBACK_SLEEP_SECONDS` (default 6 h).
 - HTTP 401 or a missing token: shows an error screen once, then sleeps at the fallback interval.
 - Only `https://` is accepted unless `ATCHOU_ALLOW_PLAIN_HTTP` is set (`idf.py menuconfig`).

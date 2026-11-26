@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, Response
 from PIL import UnidentifiedImageError
 from pydantic import BaseModel
 
-from . import auth, db, frame, imaging
+from . import auth, db, frame, imaging, panels
 from .config import Config
 
 class PostUpdate(BaseModel):
@@ -93,8 +93,8 @@ def create_app(data_dir: Path | None = None, config: Config | None = None, now_f
         mode: str = Form("dither"),
     ):
         params = _build_params(crop, rotate, brightness, contrast, author, show_author, mode)
-        out = imaging.render(_load(await image.read()), params)
-        return Response(imaging.to_png(out), media_type="image/png")
+        shown = imaging.show(imaging.adjust(_load(await image.read()), params), params)
+        return Response(imaging.to_png(shown), media_type="image/png")
 
     @app.post("/posts", status_code=201, dependencies=[Depends(require_user)])
     async def create_post(
@@ -122,7 +122,7 @@ def create_app(data_dir: Path | None = None, config: Config | None = None, now_f
                 raise HTTPException(422, "show_on doit être au format AAAA-MM-JJ")
         params = _build_params(crop, rotate, brightness, contrast, author, show_author, mode)
         original = await image.read()
-        rendered = imaging.render(_load(original), params)
+        imaging.adjust(_load(original), params)  # reject unusable images before saving anything
 
         cur = conn.execute(
             "INSERT INTO posts (author, sender, show_on, pinned, exclude_from_rotation, show_author, params)"
@@ -141,8 +141,6 @@ def create_app(data_dir: Path | None = None, config: Config | None = None, now_f
         d = post_dir(post_id)
         d.mkdir(parents=True)
         (d / "original").write_bytes(original)
-        (d / "rendered.png").write_bytes(imaging.to_png(rendered))
-        (d / "panel.bin").write_bytes(imaging.to_panel_buffer(rendered))
         return row_to_dict(get_row(post_id))
 
     @app.get("/posts", dependencies=[Depends(require_user)])
@@ -157,7 +155,7 @@ def create_app(data_dir: Path | None = None, config: Config | None = None, now_f
     @app.get("/posts/{post_id}/image", dependencies=[Depends(require_user)])
     def get_image(post_id: int):
         get_row(post_id)
-        return FileResponse(post_dir(post_id) / "rendered.png", media_type="image/png")
+        return FileResponse(panels.shown_png(data_dir, conn, post_id), media_type="image/png")
 
     @app.patch("/posts/{post_id}", dependencies=[Depends(require_user)])
     def update_post(post_id: int, body: PostUpdate):

@@ -63,3 +63,34 @@ def test_preview_and_validation(client):
     assert client.post("/preview", files=f, data={"rotate": "45"}).status_code == 422
     assert client.post("/preview", files={"image": ("a.txt", b"nope", "text/plain")}).status_code == 400
     assert client.post("/posts", files=f, data={"show_on": "bad"}).status_code == 422
+
+
+def test_calibrated_palette_is_applied_and_cached(tmp_path):
+    import json
+    from atchou_server import calibration, panels
+    colors = [(2, 2, 2), (179, 182, 171), (201, 184, 0), (117, 10, 0), (0, 47, 107), (33, 69, 40)]
+    calibration.save_palette(tmp_path, colors)
+    measured, version = imaging.load_calibration(tmp_path)
+    assert measured == colors and version.startswith("cal")
+
+    # A mid gray under the real white/black must dither differently from the theoretical palette.
+    gray = Image.new("RGB", (imaging.WIDTH, imaging.HEIGHT), (200, 200, 200))
+    params = imaging.EditParams()
+    plain = imaging.to_panel_buffer(imaging.quantize(gray, params))
+    cal = imaging.to_panel_buffer(imaging.quantize(gray, params, measured))
+    assert len(cal) == 192000 and plain != cal
+
+
+def test_calibration_measure_reads_chart_photo():
+    from atchou_server import calibration
+    chart = calibration.pattern_image().convert("RGB")
+    buf = io.BytesIO()
+    chart.save(buf, format="PNG")
+    assert calibration.measure(buf.getvalue()) == [tuple(c) for c in imaging.THEORETICAL]
+    flipped = io.BytesIO()
+    chart.rotate(180).save(flipped, format="PNG")
+    try:
+        calibration.measure(flipped.getvalue())
+        assert False, "an upside-down chart must be rejected"
+    except ValueError:
+        pass

@@ -24,7 +24,7 @@
 static const char *TAG = "atchou";
 
 #define PLAUSIBLE_TIME 1767225600  // 2026-01-01: anything earlier is an unset clock
-#define LONG_PRESS_MS 5000
+#define LONG_PRESS_MS 8000
 #define WAKE_GRACE_S 120
 
 static bool clock_is_set(void)
@@ -51,6 +51,16 @@ static bool key_woke_us(void)
 
 static bool key_held_long(void)
 {
+    // After deep sleep the pin is still in RTC mode with its digital input off,
+    // which reads as a permanently pressed key until it is reconfigured.
+    rtc_gpio_deinit(BOARD_KEY_GPIO);
+    gpio_config_t in = {
+        .pin_bit_mask = 1ULL << BOARD_KEY_GPIO,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+    };
+    gpio_config(&in);
+    vTaskDelay(pdMS_TO_TICKS(20));
     board_led_activity(true);
     int64_t start = esp_timer_get_time();
     while (gpio_get_level(BOARD_KEY_GPIO) == 0) {
